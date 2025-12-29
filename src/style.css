@@ -1,0 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Oxanium:wght@500;600;700&family=Rajdhani:wght@400;500;600&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-vrc-background: rgb(31, 35, 42);
+  --color-vrc-highlight: rgb(106, 227, 249);
+  --color-vrc-icon: rgb(43, 170, 193);
+  --color-vrc-button: rgb(17, 54, 55);
+  --color-vrc-text: rgb(186, 186, 186);
+  --color-vrc-subtext: rgb(0, 131, 137);
+}
+
+@layer base {
+  :root {
+    --font-body: "Rajdhani", "Segoe UI", sans-serif;
+    --font-display: "Oxanium", "Rajdhani", "Segoe UI", sans-serif;
+  }
+
+  html,
+  body,
+  #app {
+    height: 100%;
+    width: 100%;
+  }
+
+  ::-ms-reveal {
+    display: none;
+  }
+}

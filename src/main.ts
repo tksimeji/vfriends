@@ -1,4 +1,9 @@
-import { createApp } from "vue";
-import App from "./App.vue";
+import {createApp} from 'vue';
+import {createVfm} from 'vue-final-modal';
+import App from './App.vue';
+import 'vue-final-modal/style.css';
 
-createApp(App).mount("#app");
+const app = createApp(App);
+const vfm = createVfm();
+
+app.use(vfm).mount('#app');
