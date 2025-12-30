@@ -19,11 +19,20 @@ pub enum AuthAction {
 #[derive(Serialize, Clone)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum AuthEvent {
-    Started { action: AuthAction },
-    TwoFactorRequired { methods: Vec<String>, message: Option<String> },
-    Success { user: AuthUser },
-    Failure { message: String, code: Option<String> },
-    LoggedOut,
+    Started {
+        action: AuthAction,
+    },
+    TwoFactorRequired {
+        methods: Vec<String>,
+        message: Option<String>,
+    },
+    Success {
+        user: AuthUser,
+    },
+    Failure {
+        message: String,
+        code: Option<String>,
+    },
 }
 
 impl AuthEvent {

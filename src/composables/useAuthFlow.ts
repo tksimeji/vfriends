@@ -220,6 +220,11 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
     unlistenRef.value = await listen<AuthEvent>('vrc:auth', (event) => {
       handleAuthEvent(event.payload);
     });
+    try {
+      await invoke('restore_session');
+    } catch (error) {
+      console.error(error);
+    }
   });
 
   onBeforeUnmount(() => {

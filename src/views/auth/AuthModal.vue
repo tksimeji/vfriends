@@ -13,11 +13,13 @@ const {
   isSubmitting,
   errorMessage,
   successMessage,
+  authedUser,
   currentStep,
   handleCredentialsSubmit,
   handleTwoFactorSubmit,
   handleBackToCredentials,
   handleSuccessClose,
+  handleLogout,
 } = useAuthFlow();
 </script>
 
@@ -49,9 +51,10 @@ const {
 
     <AuthSuccessPage
         v-else
-        :user="{ id: '', displayName: 'VRChat User' }"
+        :user="authedUser ?? { id: '', displayName: 'VRChat User' }"
         :is-submitting="isSubmitting"
         @close="handleSuccessClose"
+        @logout="handleLogout"
     />
   </div>
 </template>
