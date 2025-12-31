@@ -1,4 +1,5 @@
 use crate::authv2::events::{AuthAction, AuthEvent};
+use crate::pipeline;
 use crate::utils::{dispatch_2fa_verification, AppResult};
 use keyring::Error as KeyringError;
 use reqwest::cookie::Jar;
@@ -61,13 +62,16 @@ impl AuthState {
         app: &AppHandle,
         current_user: &models::CurrentUser,
     ) -> AppResult<()> {
-        self.with_session_mut(|session| {
+        let (cookie_header, user_agent) = self.with_session_mut(|session| {
             session.is_pending_2fa = false;
             session.config.basic_auth = None;
             if let Err(err) = session.save_cookies() {
                 eprintln!("Failed to save auth cookies to keychain: {err}");
             }
+            (session.cookie_header(), session.config.user_agent.clone())
         })?;
+
+        pipeline::start_with_cookie_header(app, cookie_header, user_agent);
 
         AuthEvent::Success {
             user: current_user.clone(),
@@ -196,6 +200,7 @@ impl AuthState {
             Ok(login_result) => login_result,
             Err(error) => {
                 if is_auth_error(&error.to_string()) {
+                    pipeline::stop(app);
                     self.reset_session();
                     clear_saved_cookies();
                 }
@@ -208,6 +213,7 @@ impl AuthState {
                 self.finish_auth(app, &current_user)?;
             }
             models::EitherUserOrTwoFactor::RequiresTwoFactorAuth(_) => {
+                pipeline::stop(app);
                 self.reset_session();
                 clear_saved_cookies();
             }
