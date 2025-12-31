@@ -10,16 +10,19 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@js-temporal/polyfill": "^0.5.1",
     "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "lucide-vue-next": "^0.562.0",
     "tailwindcss": "^4.1.18",
     "vue": "^3.5.13",
-    "vue-final-modal": "^4.5.5"
+    "vue-final-modal": "^4.5.5",
+    "vue-virtual-scroller": "^2.0.0-beta.8"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "@types/vue-virtual-scroller": "npm:@vsme/vue-virtual-scroller@^1.0.1",
     "@vitejs/plugin-vue": "^5.2.1",
     "typescript": "~5.6.2",
     "vite": "^6.0.3",

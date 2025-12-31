@@ -2,7 +2,11 @@
 import AuthCredentialsPage from './AuthCredentialsPage.vue';
 import AuthSuccessPage from './AuthSuccessPage.vue';
 import Auth2FaPage from './Auth2FaPage.vue';
-import {useAuthFlow} from '../../composables/useAuthFlow.ts';
+import {type AuthUser, useAuthFlow} from '../../composables/useAuthFlow.ts';
+
+const emit = defineEmits<{
+  (event: 'login-success', user: AuthUser | null): void;
+}>();
 
 const {
   username,
@@ -20,7 +24,9 @@ const {
   handleBackToCredentials,
   handleSuccessClose,
   handleLogout,
-} = useAuthFlow();
+} = useAuthFlow({
+  onLoginSuccess: (user) => emit('login-success', user),
+});
 </script>
 
 <template>

@@ -1,5 +1,6 @@
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
+use vrchatapi::models;
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -27,7 +28,7 @@ pub enum AuthEvent {
         message: Option<String>,
     },
     Success {
-        user: AuthUser,
+        user: models::CurrentUser,
     },
     Failure {
         message: String,

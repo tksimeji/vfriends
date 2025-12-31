@@ -163,7 +163,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
 
     markSubmitting('credentials');
     try {
-      await invoke('start_auth_flow', {
+      await invoke('begin_auth', {
         username: trimmedUsername,
         password: state.password,
       });
