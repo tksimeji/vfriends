@@ -10,12 +10,13 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@headlessui/vue": "^1.7.23",
     "@js-temporal/polyfill": "^0.5.1",
     "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
-    "@headlessui/vue": "^1.7.23",
     "lucide-vue-next": "^0.562.0",
+    "node-vibrant": "^4.0.3",
     "tailwindcss": "^4.1.18",
     "vue": "^3.5.13",
     "vue-final-modal": "^4.5.5",

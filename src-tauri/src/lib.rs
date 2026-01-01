@@ -12,6 +12,7 @@ use crate::commands::{
     fetch_friends,
     fetch_notification_preferences,
     fetch_notification_settings,
+    fetch_cached_image_data,
     preview_notification_sound,
     save_notification_sound,
     logout,
@@ -61,6 +62,7 @@ pub fn run() {
             set_notification_settings,
             preview_notification_sound,
             save_notification_sound,
+            fetch_cached_image_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

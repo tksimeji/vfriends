@@ -24,6 +24,7 @@ const emit = defineEmits<{
   (e: 'settings-opened'): void;
   (e: 'settings-closed'): void;
   (e: 'suggestions-updated', suggestions: VRChat.LimitedUserFriend[]): void;
+  (e: 'hover-color', rgb: [number, number, number] | null): void;
 }>();
 
 const filteredFriends = computed(() => {
@@ -137,6 +138,7 @@ defineExpose({
     <FriendsList
         v-if="showList"
         :friends="filteredFriends"
+        @hover-color="(rgb) => emit('hover-color', rgb)"
         @open-settings="openSettingsForFriend"
     />
   </div>

@@ -14,6 +14,7 @@ const isAuthenticated = computed(() => Boolean(authedUser.value));
 const searchQuery = ref('');
 const searchSuggestions = ref<VRChat.LimitedUserFriend[]>([]);
 const isSettingsOpen = ref(false);
+const hoverColor = ref<[number, number, number] | null>(null);
 
 type FriendsViewHandle = {
   openSettings: () => void;
@@ -30,6 +31,7 @@ const handleLoginSuccess = (user: AuthUser | null) => {
 const handleLogout = () => {
   authedUser.value = null;
   searchSuggestions.value = [];
+  hoverColor.value = null;
 };
 
 const handleSuggestionsUpdated = (
@@ -45,6 +47,21 @@ const handleOpenSettings = () => {
 const handleOpenFriendSettings = (friendId: string) => {
   friendsViewRef.value?.openSettingsForFriend(friendId);
 };
+
+const handleHoverColor = (rgb: [number, number, number] | null) => {
+  hoverColor.value = rgb;
+};
+
+const hoverOverlayKey = computed(() => (hoverColor.value ? hoverColor.value.join('-') : 'none'));
+const hoverOverlayStyle = computed(() => {
+  if (!hoverColor.value) return {};
+  const [r, g, b] = hoverColor.value;
+  const accent = `rgba(${r}, ${g}, ${b}, 0.4)`;
+  const base = `rgba(31, 35, 42, 0.92)`;
+  return {
+    backgroundImage: `linear-gradient(135deg, ${accent}, ${base})`,
+  };
+});
 
 const handleLogoutFromTitle = async () => {
   try {
@@ -65,6 +82,14 @@ const handleLogoutFromTitle = async () => {
       class="bg-vrc-background flex flex-col h-full overflow-hidden pt-12 relative w-full"
       :class="isAuthenticated ? '' : 'auth-background'"
   >
+    <Transition name="hover-overlay">
+      <div
+          v-if="hoverColor"
+          :key="hoverOverlayKey"
+          class="absolute inset-0 pointer-events-none z-0"
+          :style="hoverOverlayStyle"
+      ></div>
+    </Transition>
     <Teleport to="#titlebar">
       <TitleBar
           v-model:query="searchQuery"
@@ -77,10 +102,11 @@ const handleLogoutFromTitle = async () => {
       />
     </Teleport>
 
-    <div class="flex flex-1 flex-col items-center min-h-0 overflow-hidden relative">
+    <div class="flex flex-1 flex-col items-center min-h-0 overflow-hidden relative z-10">
       <FriendsView
           ref="friendsViewRef"
           :search-query="searchQuery"
+          @hover-color="handleHoverColor"
           @suggestions-updated="handleSuggestionsUpdated"
           @settings-opened="isSettingsOpen = true"
           @settings-closed="isSettingsOpen = false"
@@ -102,6 +128,21 @@ const handleLogoutFromTitle = async () => {
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
+}
+
+.hover-overlay-enter-active,
+.hover-overlay-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.hover-overlay-enter-from,
+.hover-overlay-leave-to {
+  opacity: 0;
+}
+
+.hover-overlay-enter-to,
+.hover-overlay-leave-from {
+  opacity: 1;
 }
 </style>
 

@@ -93,3 +93,24 @@ pub fn save_notification_sound(app: AppHandle, name: String, bytes: Vec<u8>) -> 
     let path = crate::notifications::sound::store_sound_file(&app, &name, &bytes)?;
     Ok(path.to_string_lossy().to_string())
 }
+
+#[tauri::command]
+pub async fn fetch_cached_image_data(
+    state: State<'_, AuthState>,
+    url: String,
+) -> AppResult<Option<String>> {
+    let (client, user_agent) = state.with_session(|session| {
+        (
+            session.config.client.clone(),
+            session
+                .config
+                .user_agent
+                .clone()
+                .unwrap_or_else(|| "vfriends".to_string()),
+        )
+    })?;
+
+    let data =
+        crate::notifications::fetch_cached_image_data_with_client(url, &client, &user_agent).await;
+    Ok(data)
+}

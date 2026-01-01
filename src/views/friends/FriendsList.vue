@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed} from 'vue';
+import {computed, ref} from 'vue';
 import {DynamicScroller, DynamicScrollerItem} from 'vue-virtual-scroller';
 import FriendCard from './FriendCard.vue';
 import {useFriendGrid} from '../../composables/useFriendGrid';
@@ -11,13 +11,31 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'open-settings', friendId: string): void;
+  (e: 'hover-color', rgb: [number, number, number] | null): void;
 }>();
 
 const friendsRef = computed(() => props.friends);
 const {gridRows, gridStyle, minRowHeight, gridContainerRef} = useFriendGrid(friendsRef);
+const hoveredId = ref<string | null>(null);
 
 const openSettingsForFriend = (friendId: string) => {
   emit('open-settings', friendId);
+};
+
+const handleHover = (payload: {
+  id: string;
+  rgb: [number, number, number] | null;
+  active: boolean;
+}) => {
+  if (payload.active) {
+    hoveredId.value = payload.id;
+    emit('hover-color', payload.rgb);
+    return;
+  }
+  if (hoveredId.value === payload.id) {
+    hoveredId.value = null;
+    emit('hover-color', null);
+  }
 };
 </script>
 
@@ -40,6 +58,7 @@ const openSettingsForFriend = (friendId: string) => {
                 :key="entry.id"
                 :friend="entry"
                 @open-settings="openSettingsForFriend(entry.id)"
+                @hover="handleHover"
             />
           </div>
         </DynamicScrollerItem>
