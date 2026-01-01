@@ -48,7 +48,7 @@ const onCodeInput = (event: Event) => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <h2 class="text-lg font-semibold text-vrc-highlight">2FA確認</h2>
+    <h2 class="font-semibold text-lg text-vrc-highlight">2FA確認</h2>
     <p class="text-sm text-vrc-text">2FAコードを入力してください。</p>
 
     <div class="flex flex-col gap-2">
@@ -73,12 +73,12 @@ const onCodeInput = (event: Event) => {
         <KeyRoundIcon/>
       </VrcInput>
 
-      <p v-if="hint" class="text-xs text-vrc-text/70">{{ hint }}</p>
+      <p v-if="hint" class="text-vrc-text/70 text-xs">{{ hint }}</p>
     </div>
 
     <AuthStatusMessage :error="props.errorMessage" :success="props.successMessage"/>
 
-    <div class="flex items-center gap-2">
+    <div class="flex gap-2 items-center">
       <button
           type="button"
           class="px-2 text-sm text-vrc-text/70 hover:text-vrc-highlight"
@@ -94,3 +94,4 @@ const onCodeInput = (event: Event) => {
     </div>
   </div>
 </template>
+

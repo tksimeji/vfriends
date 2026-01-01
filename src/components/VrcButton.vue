@@ -45,8 +45,9 @@ const isDisabled = computed(() => Boolean(attrs.disabled) || props.loading);
   >
     <span
         v-if="props.loading"
-        class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+        class="animate-spin border-2 border-current border-t-transparent h-4 rounded-full w-4"
     ></span>
     <slot/>
   </button>
 </template>
+

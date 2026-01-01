@@ -18,7 +18,7 @@ const togglePassword = () => {
 
 <template>
   <div
-      class="group flex items-center gap-2 rounded-md border-2 border-vrc-highlight/20 bg-vrc-button/80 px-3 py-2 text-vrc-text transition focus-within:border-vrc-highlight/70 focus-within:bg-vrc-button/90 hover:border-vrc-highlight/40"
+      class="bg-vrc-button/80 border-2 border-vrc-highlight/20 flex gap-2 group items-center px-3 py-2 rounded-md text-vrc-text transition focus-within:bg-vrc-button/90 focus-within:border-vrc-highlight/70 hover:border-vrc-highlight/40"
       :class="$attrs.disabled ? 'opacity-60' : ''"
   >
     <div class="text-vrc-subtext">
@@ -26,7 +26,7 @@ const togglePassword = () => {
     </div>
 
     <input
-        class="min-w-0 grow bg-transparent text-sm outline-none placeholder:text-vrc-subtext/80"
+        class="bg-transparent grow min-w-0 outline-none text-sm placeholder:text-vrc-subtext/80"
         v-bind="$attrs"
         :type="inputType"
     />
@@ -43,3 +43,4 @@ const togglePassword = () => {
     </button>
   </div>
 </template>
+

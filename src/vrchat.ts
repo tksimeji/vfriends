@@ -43,4 +43,43 @@ export namespace VRChat {
     const location = friend.location.toLowerCase();
     return status === 'offline' || location === 'offline' || location === 'web';
   };
+
+  export const avatarUrl = (friend: LimitedUserFriend) =>
+    friend.profilePicOverrideThumbnail ||
+    friend.currentAvatarThumbnailImageUrl ||
+    friend.imageUrl ||
+    '';
+
+  export const statusKey = (friend: LimitedUserFriend) =>
+    isOffline(friend) ? 'offline' : friend.status.toLowerCase();
+
+  export const statusLabel = (statusKey: string) => {
+    switch (statusKey) {
+      case 'join me':
+        return 'だれでもおいで';
+      case 'active':
+        return 'オンライン';
+      case 'ask me':
+        return 'きいてみてね';
+      case 'busy':
+        return '取り込み中';
+      default:
+        return 'オフライン';
+    }
+  };
+
+  export const statusColorClass = (statusKey: string) => {
+    switch (statusKey) {
+      case 'join me':
+        return 'bg-vrc-join-me';
+      case 'active':
+        return 'bg-vrc-online';
+      case 'ask me':
+        return 'bg-vrc-ask-me';
+      case 'busy':
+        return 'bg-vrc-do-not-disturb';
+      default:
+        return 'bg-black';
+    }
+  };
 }

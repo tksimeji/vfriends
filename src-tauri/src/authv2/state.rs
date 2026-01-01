@@ -222,6 +222,14 @@ impl AuthState {
         Ok(())
     }
 
+    pub fn logout(&self, app: &AppHandle) -> AppResult<()> {
+        pipeline::stop(app);
+        self.reset_session();
+        clear_saved_cookies();
+        AuthEvent::LoggedOut.emit(app);
+        Ok(())
+    }
+
     fn reset_session(&self) {
         let _ = self.with_session_mut(|session| {
             session.reset();

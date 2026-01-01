@@ -1,49 +1,29 @@
 <script setup lang="ts">
 import {Temporal} from '@js-temporal/polyfill';
-import {computed} from 'vue';
+import {computed, onMounted} from 'vue';
+import {VolumeOffIcon} from 'lucide-vue-next';
+import {useNotificationPreferences} from '../../composables/notifications/useNotificationPreferences';
 import {VRChat} from '../../vrchat.ts';
 
 const props = withDefaults(defineProps<{
   friend: VRChat.LimitedUserFriend;
 }>(), {});
 
+const emit = defineEmits<{
+  (e: 'open-settings'): void;
+}>();
+
+const {isEnabled, load} = useNotificationPreferences();
+
+onMounted(() => {
+  void load();
+});
+
 const isOffline = computed(() => VRChat.isOffline(props.friend));
-const statusKey = computed(() => props.friend.status.toLowerCase());
-const displayStatus = computed(() => (isOffline.value ? 'offline' : statusKey.value));
-const statusColor = computed(() => {
-  switch (displayStatus.value) {
-    case 'join me':
-      return 'bg-vrc-join-me';
-    case 'active':
-      return 'bg-vrc-online';
-    case 'ask me':
-      return 'bg-vrc-ask-me';
-    case 'busy':
-      return 'bg-vrc-do-not-disturb';
-    default:
-      return 'bg-black';
-  }
-});
-const statusLabel = computed(() => {
-  switch (displayStatus.value) {
-    case 'join me':
-      return 'だれでもおいで';
-    case 'active':
-      return 'オンライン';
-    case 'ask me':
-      return 'きいてみてね';
-    case 'busy':
-      return '取り込み中';
-    default:
-      return 'オフライン';
-  }
-});
-const avatarUrl = computed(
-    () =>
-        props.friend.profilePicOverrideThumbnail ||
-        props.friend.currentAvatarThumbnailImageUrl ||
-        props.friend.imageUrl,
-);
+const statusKey = computed(() => VRChat.statusKey(props.friend));
+const statusColor = computed(() => VRChat.statusColorClass(statusKey.value));
+const statusLabel = computed(() => VRChat.statusLabel(statusKey.value));
+const avatarUrl = computed(() => VRChat.avatarUrl(props.friend));
 
 const lastOnline = computed(() => {
   if (!isOffline.value) return null;
@@ -77,28 +57,41 @@ const lastOnline = computed(() => {
     return null;
   }
 });
+
+const notificationsEnabled = computed(() => isEnabled(props.friend.id));
 </script>
 
 <template>
   <article
-      class="flex select-none flex-col overflow-y-hidden rounded-2xl border-3 border-vrc-background-secondary bg-vrc-background-secondary transition-colors duration-150 hover:border-vrc-highlight/70 hover:bg-vrc-highlight/10"
+      class="bg-vrc-background-secondary border-3 border-vrc-background-secondary cursor-pointer duration-150 flex flex-col overflow-y-hidden rounded-2xl select-none transition-colors hover:bg-vrc-highlight/10 hover:border-vrc-highlight/70"
+      @click="emit('open-settings')"
   >
     <img
         :src="avatarUrl"
         alt=""
-        class="aspect-video rounded-t-xl object-cover"
+        class="aspect-video object-cover rounded-t-xl"
         :class="isOffline ? 'opacity-70' : ''"
         loading="lazy"
     />
-    <div class="bg-linear-to-b flex flex-col gap-2 p-2 from-vrc-background to-vrc-background-secondary">
-      <p class="font-bold text-vrc-friend text-xl">{{ props.friend.displayName }}</p>
-      <div class="flex items-center gap-1">
-        <div class="size-3 rounded-full" :class="statusColor"/>
+    <div class="bg-linear-to-b flex flex-col from-vrc-background gap-2 p-2 to-vrc-background-secondary">
+      <div class="flex gap-2 items-center justify-between">
+        <div class="flex gap-2 items-center">
+          <p class="font-bold text-vrc-friend text-xl">{{ props.friend.displayName }}</p>
+          <VolumeOffIcon
+              v-if="notificationsEnabled === false"
+              class="text-vrc-text/50"
+              :size="16"
+          />
+        </div>
+      </div>
+      <div class="flex gap-1 items-center">
+        <div class="rounded-full size-3" :class="statusColor"/>
         <span class="text-vrc-highlight/60">{{ statusLabel }}</span>
       </div>
-      <span v-if="lastOnline" class="text-xs text-vrc-text">
+      <span v-if="lastOnline" class="text-vrc-text text-xs">
         最終オンライン：{{ lastOnline }}
       </span>
     </div>
   </article>
 </template>
+

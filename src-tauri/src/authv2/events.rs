@@ -34,6 +34,7 @@ pub enum AuthEvent {
         message: String,
         code: Option<String>,
     },
+    LoggedOut,
 }
 
 impl AuthEvent {

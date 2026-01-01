@@ -27,9 +27,40 @@
   #app {
     height: 100%;
     width: 100%;
+    overflow: hidden;
   }
 
   ::-ms-reveal {
     display: none;
   }
+}
+
+[data-tauri-frame-tb] {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background-color: transparent;
+  z-index: 55;
+}
+
+#frame-tb-minimize,
+#frame-tb-maximize,
+#frame-tb-close {
+  width: 46px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(245, 247, 250) !important;
+}
+
+#frame-tb-minimize:hover,
+#frame-tb-maximize:hover {
+  background-color: rgba(106, 227, 249, 0.12);
+}
+
+#frame-tb-close:hover {
+  background-color: rgba(140, 24, 24, 0.8);
+  color: rgb(255, 230, 230);
 }

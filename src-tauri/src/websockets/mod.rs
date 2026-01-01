@@ -7,6 +7,7 @@ mod parser;
 
 #[derive(Debug, Clone)]
 pub struct FriendOnline {
+    pub id: Option<String>,
     pub display_name: String,
     pub image_url: Option<String>,
 }
@@ -33,7 +34,14 @@ fn handle_event(app: &AppHandle, user_agent: &str, event: PipelineEvent) {
             let app = app.clone();
             let agent = user_agent.to_string();
             tauri::async_runtime::spawn(async move {
-                notify_friend_online(&app, &friend.display_name, friend.image_url, &agent).await;
+                notify_friend_online(
+                    &app,
+                    friend.id,
+                    &friend.display_name,
+                    friend.image_url,
+                    &agent,
+                )
+                .await;
             });
         }
         PipelineEvent::Other { .. } => {}

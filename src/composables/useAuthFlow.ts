@@ -14,6 +14,10 @@ export type AuthUser = {
   id: string;
   displayName: string;
   username?: string | null;
+  profilePicOverrideThumbnail?: string | null;
+  currentAvatarThumbnailImageUrl?: string | null;
+  imageUrl?: string | null;
+  userIcon?: string | null;
 };
 
 type AuthState = {

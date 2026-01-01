@@ -31,7 +31,7 @@ const {
 
 <template>
   <div
-      class="backdrop-blur-2xl bg-vrc-background/40 h-[min(90vh,520px)] overflow-y-auto p-8 rounded-4xl shadow-2xl ring-1 ring-white/10 w-[min(90vw,520px)]"
+      class="backdrop-blur-2xl bg-vrc-background/40 h-[min(90vh,520px)] overflow-y-auto p-8 ring-1 ring-white/10 rounded-4xl shadow-2xl w-[min(90vw,520px)]"
   >
     <AuthCredentialsPage
         v-if="currentStep === 'credentials'"
@@ -67,3 +67,4 @@ const {
 
 <style scoped>
 </style>
+

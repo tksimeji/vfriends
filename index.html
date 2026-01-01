@@ -8,6 +8,16 @@
   </head>
 
   <body>
+    <div
+      id="titlebar"
+      class="fixed inset-x-0 top-0 z-50 h-12 border-b border-vrc-highlight/15 bg-vrc-background/95 backdrop-blur"
+    >
+      <div
+        id="tauri-window-controls"
+        class="absolute right-0 top-0 flex h-full items-center justify-end text-slate-50"
+        data-tauri-frame-tb
+      ></div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

@@ -1,6 +1,8 @@
 use super::image::fetch_image;
+use super::sound::play_sound_file;
 use super::FriendOnlinePayload;
-use std::path::PathBuf;
+use std::str::FromStr;
+use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
 #[cfg(target_os = "windows")]
@@ -15,21 +17,70 @@ use windows_registry::CURRENT_USER;
 #[cfg(not(target_os = "windows"))]
 use tauri_plugin_notification::NotificationExt;
 
-pub async fn notify(app: &AppHandle, payload: &FriendOnlinePayload, user_agent: &str) {
+enum SoundChoice {
+    Builtin(String),
+    File(PathBuf),
+    Silent,
+}
+
+fn sound_choice(sound: &str) -> Option<SoundChoice> {
+    let trimmed = sound.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    if trimmed.eq_ignore_ascii_case("silent") {
+        return Some(SoundChoice::Silent);
+    }
+
+    if let Some(path) = resolve_sound_path(trimmed) {
+        return Some(SoundChoice::File(path));
+    }
+
+    Some(SoundChoice::Builtin(trimmed.to_string()))
+}
+
+fn resolve_sound_path(value: &str) -> Option<PathBuf> {
+    let mut candidate = value.to_string();
+    if let Some(stripped) = value.strip_prefix("file://") {
+        candidate = stripped.trim_start_matches('/').to_string();
+        if cfg!(target_os = "windows") {
+            candidate = candidate.replace('/', "\\");
+        }
+    }
+
+    let path = Path::new(&candidate);
+    if path.is_file() {
+        return Some(path.to_path_buf());
+    }
+
+    None
+}
+
+pub async fn notify(
+    app: &AppHandle,
+    payload: &FriendOnlinePayload,
+    user_agent: &str,
+    sound: Option<String>,
+) {
     #[cfg(target_os = "windows")]
     {
-        notify_windows(app, payload, user_agent).await;
+        notify_windows(app, payload, user_agent, sound).await;
         return;
     }
 
     #[cfg(not(target_os = "windows"))]
     {
-        notify_desktop(app, payload, user_agent).await;
+        notify_desktop(app, payload, user_agent, sound).await;
     }
 }
 
 #[cfg(not(target_os = "windows"))]
-async fn notify_desktop(app: &AppHandle, payload: &FriendOnlinePayload, user_agent: &str) {
+async fn notify_desktop(
+    app: &AppHandle,
+    payload: &FriendOnlinePayload,
+    user_agent: &str,
+    sound: Option<String>,
+) {
     let mut builder = app
         .notification()
         .builder()
@@ -42,6 +93,20 @@ async fn notify_desktop(app: &AppHandle, payload: &FriendOnlinePayload, user_age
         }
     }
 
+    if let Some(sound) = sound {
+        if let Some(choice) = sound_choice(&sound) {
+            match choice {
+                SoundChoice::Builtin(value) => {
+                    builder = builder.sound(value);
+                }
+                SoundChoice::File(path) => {
+                    play_sound_file(path);
+                }
+                SoundChoice::Silent => {}
+            }
+        }
+    }
+
     let _ = builder.show();
 }
 
@@ -49,7 +114,12 @@ async fn notify_desktop(app: &AppHandle, payload: &FriendOnlinePayload, user_age
 static APP_ID_READY: OnceLock<bool> = OnceLock::new();
 
 #[cfg(target_os = "windows")]
-async fn notify_windows(app: &AppHandle, payload: &FriendOnlinePayload, user_agent: &str) {
+async fn notify_windows(
+    app: &AppHandle,
+    payload: &FriendOnlinePayload,
+    user_agent: &str,
+    sound: Option<String>,
+) {
     let app_id = app.config().identifier.clone();
     let app_name = app
         .config()
@@ -63,6 +133,25 @@ async fn notify_windows(app: &AppHandle, payload: &FriendOnlinePayload, user_age
             .title(&payload.display_name)
             .text1(&payload.title)
             .text2(&payload.body);
+
+        if let Some(sound) = sound {
+            if let Some(choice) = sound_choice(&sound) {
+                match choice {
+                    SoundChoice::Silent => {
+                        toast = toast.sound(None);
+                    }
+                    SoundChoice::Builtin(value) => {
+                        if let Ok(parsed) = tauri_winrt_notification::Sound::from_str(&value) {
+                            toast = toast.sound(Some(parsed));
+                        }
+                    }
+                    SoundChoice::File(path) => {
+                        toast = toast.sound(None);
+                        play_sound_file(path);
+                    }
+                }
+            }
+        }
 
         if let Some(path) = icon_path {
             toast = toast.icon(path.as_path(), IconCrop::Circular, &payload.display_name);
