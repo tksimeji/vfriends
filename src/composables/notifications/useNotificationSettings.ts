@@ -1,10 +1,10 @@
 import {computed, ref} from 'vue';
 import {fetchNotificationSettings, setNotificationSettings} from '../../data/notifications';
-import type {NotificationSettings} from '../../domain/notifications';
+import type {NotificationConfig} from '../../domain/notifications';
 
 const DEFAULT_TEMPLATE = '{name} is online';
 
-const settings = ref<NotificationSettings>({
+const settings = ref<NotificationConfig>({
   messageTemplate: DEFAULT_TEMPLATE,
   sound: '',
 });

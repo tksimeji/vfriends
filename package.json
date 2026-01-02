@@ -10,7 +10,6 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.23",
     "@js-temporal/polyfill": "^0.5.1",
     "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/api": "^2",

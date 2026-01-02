@@ -188,12 +188,15 @@ impl AuthState {
         Ok(())
     }
 
-    pub async fn restore_session(&self, app: &AppHandle) -> AppResult<()> {
+    pub async fn restore_session(
+        &self,
+        app: &AppHandle,
+    ) -> AppResult<Option<models::CurrentUser>> {
         let (config, has_cookies) = self
             .with_session(|session| (session.config.clone(), session.cookie_header().is_some()))?;
 
         if !has_cookies {
-            return Ok(());
+            return Ok(None);
         }
 
         let login_result = match get_current_user(&config).await {
@@ -204,13 +207,14 @@ impl AuthState {
                     self.reset_session();
                     clear_saved_cookies();
                 }
-                return Ok(());
+                return Ok(None);
             }
         };
 
         match login_result {
             models::EitherUserOrTwoFactor::CurrentUser(current_user) => {
                 self.finish_auth(app, &current_user)?;
+                return Ok(Some(current_user));
             }
             models::EitherUserOrTwoFactor::RequiresTwoFactorAuth(_) => {
                 pipeline::stop(app);
@@ -219,7 +223,7 @@ impl AuthState {
             }
         }
 
-        Ok(())
+        Ok(None)
     }
 
     pub fn logout(&self, app: &AppHandle) -> AppResult<()> {

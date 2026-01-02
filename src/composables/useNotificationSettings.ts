@@ -1,4 +1,4 @@
 export {
   useNotificationSettings,
 } from './notifications/useNotificationSettings';
-export type {NotificationSettings} from '../domain/notifications';
+export type {NotificationConfig} from '../domain/notifications';

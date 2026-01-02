@@ -1,43 +1,46 @@
 <script setup lang="ts">
 import {computed} from 'vue';
+import {VRChat} from '../vrchat.ts';
 
 const props = withDefaults(
   defineProps<{
-    src?: string;
-    name?: string;
-    sizeClass?: string;
+    user: VRChat.LimitedUserFriend | VRChat.CurrentUser;
+    size?: number;
     borderClass?: string;
     fallbackClass?: string;
     alt?: string;
   }>(),
   {
-    src: '',
-    name: '',
-    sizeClass: 'size-6',
+    size: 24,
     borderClass: 'border border-vrc-highlight/30',
-    fallbackClass: 'text-[10px] font-semibold',
+    fallbackClass: 'font-semibold text-[10px]',
     alt: '',
   },
 );
 
+const avatarUrl = computed(() => VRChat.resolveAvatarUrl(props.user));
+const displayName = computed(() => props.user.displayName ?? '');
+const altText = computed(() => props.alt || displayName.value);
 const initial = computed(() => {
-  const name = props.name?.trim();
+  const name = displayName.value.trim();
   return name ? name.charAt(0).toUpperCase() : '?';
 });
 </script>
 
 <template>
   <img
-      v-if="props.src"
-      :src="props.src"
-      :alt="props.alt"
+      v-if="avatarUrl"
+      :src="avatarUrl"
+      :alt="altText"
       class="object-cover rounded-full"
-      :class="[props.sizeClass, props.borderClass]"
+      :class="[borderClass]"
+      :style="{height: `${props.size}px`, width: `${props.size}px`}"
   />
   <span
       v-else
       class="bg-vrc-background flex items-center justify-center rounded-full"
-      :class="[props.sizeClass, props.borderClass, props.fallbackClass]"
+      :class="[borderClass, fallbackClass]"
+      :style="{height: `${props.size}px`, width: `${props.size}px`}"
   >
     {{ initial }}
   </span>

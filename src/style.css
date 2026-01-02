@@ -4,6 +4,7 @@
 @theme {
   --color-vrc-background: rgb(31, 35, 42);
   --color-vrc-background-secondary: rgb(46, 50, 61);
+  --color-vrc-background-tertiary: rgb(32, 44, 56);
   --color-vrc-highlight: rgb(106, 227, 249);
   --color-vrc-icon: rgb(43, 170, 193);
   --color-vrc-button: rgb(17, 54, 55);
@@ -28,6 +29,22 @@
     height: 100%;
     width: 100%;
     overflow: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    background-color: var(--color-vrc-background);
+    border-radius: 8px;
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-vrc-icon);
+    border-radius: 6px;
+    transition: background-color 0.2s ease-in-out;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-vrc-highlight);
   }
 
   ::-ms-reveal {

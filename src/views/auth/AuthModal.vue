@@ -2,11 +2,7 @@
 import AuthCredentialsPage from './AuthCredentialsPage.vue';
 import AuthSuccessPage from './AuthSuccessPage.vue';
 import Auth2FaPage from './Auth2FaPage.vue';
-import {type AuthUser, useAuthFlow} from '../../composables/useAuthFlow.ts';
-
-const emit = defineEmits<{
-  (event: 'login-success', user: AuthUser | null): void;
-}>();
+import {useAuthFlow} from '../../composables/useAuthFlow.ts';
 
 const {
   username,
@@ -24,9 +20,7 @@ const {
   handleBackToCredentials,
   handleSuccessClose,
   handleLogout,
-} = useAuthFlow({
-  onLoginSuccess: (user) => emit('login-success', user),
-});
+} = useAuthFlow();
 </script>
 
 <template>
@@ -57,7 +51,7 @@ const {
 
     <AuthSuccessPage
         v-else
-        :user="authedUser ?? { id: '', displayName: 'VRChat User' }"
+        :user="authedUser ?? { id: '', displayName: 'VRChat User', currentAvatarImageUrl: '', profilePicOverride: '', userIcon: '' }"
         :is-submitting="isSubmitting"
         @close="handleSuccessClose"
         @logout="handleLogout"

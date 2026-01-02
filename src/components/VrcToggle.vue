@@ -28,8 +28,8 @@ const toggle = () => {
     @click="toggle"
   >
     <span
-      class="bg-white inline-block rounded-full shadow size-4 transition-transform translate-x-1"
-      :class="props.modelValue ? 'translate-x-6' : ''"
+      class="absolute -translate-y-1/2 bg-white left-1 rounded-full shadow size-4 top-1/2 transition-transform"
+      :class="props.modelValue ? 'translate-x-5' : 'translate-x-0'"
     />
   </button>
 </template>

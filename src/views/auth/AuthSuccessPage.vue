@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import VrcButton from '../../components/VrcButton.vue';
 
+import type {VRChat} from '../../vrchat.ts';
+
 const props = withDefaults(defineProps<{
-  user: {
-    id: string;
-    displayName: string;
-    username?: string | null;
-  };
+  user: VRChat.CurrentUser;
   isSubmitting?: boolean;
 }>(), {
   isSubmitting: false,

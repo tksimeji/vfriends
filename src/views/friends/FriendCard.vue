@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {Temporal} from '@js-temporal/polyfill';
-import {computed, onMounted, ref, watch} from 'vue';
 import {VolumeOffIcon} from 'lucide-vue-next';
+import {computed, onMounted, ref, watch} from 'vue';
 import {useNotificationPreferences} from '../../composables/notifications/useNotificationPreferences';
 import {useDominantColor} from '../../composables/useDominantColor';
+import StatusBadge from '../../components/StatusBadge.vue';
 import {VRChat} from '../../vrchat.ts';
 
 const props = withDefaults(defineProps<{
@@ -22,45 +22,12 @@ onMounted(() => {
 });
 
 const isOffline = computed(() => VRChat.isOffline(props.friend));
-const statusKey = computed(() => VRChat.statusKey(props.friend));
-const statusColor = computed(() => VRChat.statusColorClass(statusKey.value));
-const statusLabel = computed(() => VRChat.statusLabel(statusKey.value));
 const avatarUrl = computed(() => VRChat.avatarUrl(props.friend));
-const {overlayStyle, rgb} = useDominantColor(avatarUrl);
+const colorSource = computed(() => props.friend);
+const {overlayStyle, rgb} = useDominantColor(colorSource);
 const isHovered = ref(false);
 
-const lastOnline = computed(() => {
-  if (!isOffline.value) return null;
-
-  const rawValue =
-      props.friend.last_activity ??
-      (props.friend as { lastActivity?: string }).lastActivity ??
-      props.friend.last_login ??
-      (props.friend as { lastLogin?: string }).lastLogin;
-  if (!rawValue) return null;
-
-  try {
-    const lastOnline = Temporal.Instant.from(rawValue);
-    const now = Temporal.Now.instant();
-
-    const diff = now.since(lastOnline, {largestUnit: 'hour'});
-
-    const diffMinutes = Math.floor(diff.total({unit: 'minute'}));
-    if (diffMinutes < 60) {
-      return `${diffMinutes}分前`;
-    }
-
-    const diffHours = Math.floor(diff.total({unit: 'hour'}));
-    if (diffHours < 24) {
-      return `${diffHours}時間前`;
-    }
-
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}日前`;
-  } catch {
-    return null;
-  }
-});
+const lastOnline = computed(() => VRChat.formatLastOnline(props.friend));
 
 const notificationsEnabled = computed(() => isEnabled(props.friend.id));
 
@@ -97,16 +64,18 @@ watch(rgb, () => {
         <div class="flex gap-2 items-center">
           <p class="font-bold text-vrc-friend text-xl">{{ props.friend.displayName }}</p>
           <VolumeOffIcon
-              v-if="notificationsEnabled === false"
-              class="text-vrc-text/50"
+              v-if="!notificationsEnabled"
+              class="text-red-600"
               :size="16"
           />
         </div>
       </div>
-      <div class="flex gap-1 items-center">
-        <div class="rounded-full size-3" :class="statusColor"/>
-        <span class="text-vrc-highlight/60">{{ statusLabel }}</span>
-      </div>
+      <StatusBadge
+          :friend="props.friend"
+          class="gap-1"
+          label-class="text-vrc-highlight/60"
+          :size="12"
+      />
       <span v-if="lastOnline" class="text-vrc-text text-xs">
         最終オンライン：{{ lastOnline }}
       </span>

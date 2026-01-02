@@ -1,24 +1,16 @@
 import {invoke} from '@tauri-apps/api/core';
 import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {computed, onBeforeUnmount, onMounted, reactive, shallowRef, toRefs} from 'vue';
+import {VRChat} from '../vrchat.ts';
+import {useAuthSession} from './useAuthSession';
 
 export type UseLoginFlowOptions = {
-  onLoginSuccess?: (user: AuthUser | null) => void;
+  onLoginSuccess?: (user: VRChat.CurrentUser | null) => void;
 };
 
 export type LoginState = 'credentials' | 'twoFactor' | 'success';
 export type TwoFactorMethod = 'totp' | 'emailOtp' | 'otp';
 export type AuthAction = 'credentials' | 'twoFactor';
-
-export type AuthUser = {
-  id: string;
-  displayName: string;
-  username?: string | null;
-  profilePicOverrideThumbnail?: string | null;
-  currentAvatarThumbnailImageUrl?: string | null;
-  imageUrl?: string | null;
-  userIcon?: string | null;
-};
 
 type AuthState = {
   username: string;
@@ -29,7 +21,7 @@ type AuthState = {
   isSubmitting: boolean;
   errorMessage: string;
   successMessage: string;
-  authedUser: AuthUser | null;
+  authedUser: VRChat.CurrentUser | null;
   currentStep: LoginState;
   activeAction: AuthAction | null;
 };
@@ -37,7 +29,7 @@ type AuthState = {
 type AuthEvent =
   | { type: 'started'; action: AuthAction }
   | { type: 'twoFactorRequired'; methods?: string[]; message?: string }
-  | { type: 'success'; user?: AuthUser }
+  | { type: 'success'; user?: VRChat.CurrentUser }
   | { type: 'failure'; message: string; code?: string }
   | { type: 'loggedOut' };
 
@@ -67,6 +59,7 @@ const createInitialState = (): AuthState => ({
 });
 
 export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
+  const {setCurrentUser, clearCurrentUser} = useAuthSession();
   const state = reactive<AuthState>(createInitialState());
   const unlistenRef = shallowRef<UnlistenFn | null>(null);
 
@@ -133,11 +126,15 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
         state.authedUser = event.user ?? {
           id: '',
           displayName: state.username || 'VRChat User',
-          username: state.username || null,
+          username: state.username || undefined,
+          currentAvatarImageUrl: '',
+          profilePicOverride: '',
+          userIcon: '',
         };
         state.password = '';
         state.twoFactorCode = '';
         state.activeAction = null;
+        setCurrentUser(state.authedUser);
         options.onLoginSuccess?.(state.authedUser);
         return;
       }
@@ -147,6 +144,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
       case 'loggedOut':
         markIdle();
         resetForm();
+        clearCurrentUser();
         return;
     }
   };
@@ -218,6 +216,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
 
   const handleLogout = () => {
     resetForm();
+    clearCurrentUser();
   };
 
   onMounted(async () => {

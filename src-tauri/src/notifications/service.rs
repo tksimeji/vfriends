@@ -1,6 +1,6 @@
 use super::platform;
-use super::store::NotificationStore;
 use tauri::{AppHandle, Manager};
+use crate::settings::SettingsStore;
 
 #[derive(Debug, Clone)]
 pub struct FriendOnlinePayload {
@@ -29,7 +29,7 @@ pub async fn notify_friend_online(
     image_url: Option<String>,
     user_agent: &str,
 ) {
-    let prefs = app.state::<NotificationStore>();
+    let prefs = app.state::<SettingsStore>();
     let resolved = resolve_settings(&prefs, friend_id.as_deref());
     let Some((message_template, sound)) = resolved else {
         return;
@@ -51,29 +51,25 @@ pub async fn preview_sound(app: &AppHandle, sound: Option<String>) {
 }
 
 fn resolve_settings(
-    prefs: &NotificationStore,
+    prefs: &SettingsStore,
     friend_id: Option<&str>,
 ) -> Option<(String, Option<String>)> {
-    let settings = prefs.settings();
-    let mut message_template = settings.message_template;
-    let mut sound = settings.sound;
+    let settings = prefs.snapshot();
+    let mut message_template = settings.default_message;
+    let mut sound = settings.default_sound;
 
     if let Some(friend_id) = friend_id {
-        if let Some(friend_pref) = prefs.preference(friend_id) {
+        if let Some(friend_pref) = settings.friend_settings.get(friend_id) {
             if !friend_pref.enabled {
                 return None;
             }
-            if let Some(template) = friend_pref
-                .message_template
-                .filter(|value| !value.trim().is_empty())
-            {
-                message_template = template;
-            }
-            if let Some(friend_sound) = friend_pref
-                .sound
-                .filter(|value| !value.trim().is_empty())
-            {
-                sound = Some(friend_sound);
+            if friend_pref.use_override {
+                if let Some(template) = friend_pref.message_override.clone() {
+                    message_template = template;
+                }
+                if let Some(friend_sound) = friend_pref.sound_override.clone() {
+                    sound = Some(friend_sound);
+                }
             }
         }
     }
@@ -84,7 +80,7 @@ fn resolve_settings(
 fn format_message(template: &str, display_name: &str) -> String {
     let trimmed = template.trim();
     if trimmed.is_empty() {
-        return format!("{display_name} is online");
+        return String::new();
     }
 
     trimmed

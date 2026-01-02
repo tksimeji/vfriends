@@ -1,13 +1,26 @@
-import {computed, ref, watch, type ComputedRef, type Ref} from 'vue';
-import {buildCardOverlayStyle, getDominantColor, type RgbColor} from '../ui/dominantColor';
+import {computed, ref, unref, watch, type ComputedRef, type Ref} from 'vue';
+import {VRChat} from '../vrchat.ts';
 
-export const useDominantColor = (source: Ref<string> | ComputedRef<string>) => {
-  const rgb = ref<RgbColor | null>(null);
+type DominantSource = VRChat.UserSummary | string | null | undefined;
+
+const resolveSourceUrl = (value: DominantSource) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  return VRChat.resolveAvatarUrl(value);
+};
+
+export const useDominantColor = (
+  source: Ref<DominantSource> | ComputedRef<DominantSource>,
+) => {
+  const rgb = ref<VRChat.RgbColor | null>(null);
   const isLoading = ref(false);
   let requestId = 0;
 
+  const sourceValue = computed(() => unref(source));
+  const sourceKey = computed(() => resolveSourceUrl(sourceValue.value));
+
   watch(
-    source,
+    sourceKey,
     async (next) => {
       requestId += 1;
       const currentId = requestId;
@@ -19,7 +32,13 @@ export const useDominantColor = (source: Ref<string> | ComputedRef<string>) => {
       }
 
       isLoading.value = true;
-      const color = await getDominantColor(next);
+      const value = sourceValue.value;
+      const color =
+        typeof value === 'string'
+          ? await VRChat.dominantColorForUrl(next)
+          : value
+            ? await VRChat.dominantColorForUser(value)
+            : null;
       if (currentId !== requestId) return;
 
       rgb.value = color;
@@ -28,7 +47,7 @@ export const useDominantColor = (source: Ref<string> | ComputedRef<string>) => {
     {immediate: true},
   );
 
-  const overlayStyle = computed(() => buildCardOverlayStyle(rgb.value));
+  const overlayStyle = computed(() => VRChat.cardOverlayStyle(rgb.value));
 
   return {
     rgb,

@@ -17,6 +17,7 @@ const {
 } = useFriends();
 
 const props = defineProps<{
+  authedUser: VRChat.CurrentUser | null;
   searchQuery: string;
 }>();
 
@@ -25,6 +26,7 @@ const emit = defineEmits<{
   (e: 'settings-closed'): void;
   (e: 'suggestions-updated', suggestions: VRChat.LimitedUserFriend[]): void;
   (e: 'hover-color', rgb: [number, number, number] | null): void;
+  (e: 'logout'): void;
 }>();
 
 const filteredFriends = computed(() => {
@@ -112,12 +114,14 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col max-w-6xl min-h-0 mx-auto relative w-full">
+  <div class="flex flex-1 flex-col max-w-6xl min-h-0 mx-auto px-4 relative w-full">
     <SettingsModal
         ref="settingsModalRef"
+        :current-user="props.authedUser"
         :friends="sortedItems"
         @open="emit('settings-opened')"
         @close="emit('settings-closed')"
+        @logout="emit('logout')"
     />
 
     <div class="border-b border-vrc-highlight/15 flex flex-wrap gap-3 items-center justify-between mb-2 py-2 text-vrc-text/60 text-xs">
@@ -143,4 +147,3 @@ defineExpose({
     />
   </div>
 </template>
-

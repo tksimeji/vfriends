@@ -5,6 +5,7 @@ mod pipeline;
 mod shell;
 mod utils;
 mod websockets;
+mod settings;
 
 use crate::authv2::state::AuthState;
 use crate::commands::{
@@ -21,8 +22,8 @@ use crate::commands::{
     set_notification_settings,
     verify_two_factor,
 };
-use crate::notifications::NotificationStore;
 use crate::pipeline::PipelineState;
+use crate::settings::SettingsStore;
 use tauri::Manager;
 use tauri_plugin_frame::FramePluginBuilder;
 
@@ -45,7 +46,7 @@ pub fn run() {
         .plugin(tauri_plugin_autostart::Builder::new().args([shell::AUTOSTART_ARG]).build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            app.manage(NotificationStore::load(app.handle()));
+            app.manage(SettingsStore::load(app.handle()));
             shell::setup(app.handle())?;
             Ok(())
         })

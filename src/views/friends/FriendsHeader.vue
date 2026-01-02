@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import {computed} from 'vue';
-import {Popover, PopoverButton, PopoverPanel} from '@headlessui/vue';
 import {SearchIcon, SettingsIcon, XIcon} from 'lucide-vue-next';
-import VrcButton from '../../components/VrcButton.vue';
-import type {AuthUser} from '../../composables/useAuthFlow';
+import {VRChat} from '../../vrchat.ts';
 import type {FriendsStatusMessage} from './types';
 
 const props = defineProps<{
@@ -13,25 +11,18 @@ const props = defineProps<{
   totalCount: number;
   isLoading: boolean;
   statusMessage: FriendsStatusMessage | null;
-  authedUser: AuthUser | null;
+  authedUser: VRChat.CurrentUser | null;
 }>();
 
 const emit = defineEmits<{
   (e: 'update:query', value: string): void;
   (e: 'open-settings'): void;
-  (e: 'logout'): void;
 }>();
 
 const accountAvatarUrl = computed(() => {
   const user = props.authedUser;
   if (!user) return '';
-  return (
-    user.profilePicOverrideThumbnail ||
-    user.currentAvatarThumbnailImageUrl ||
-    user.userIcon ||
-    user.imageUrl ||
-    ''
-  );
+  return VRChat.currentUserAvatarUrl(user);
 });
 
 const accountInitial = computed(() => {
@@ -47,9 +38,6 @@ const openSettings = () => {
   emit('open-settings');
 };
 
-const handleLogout = () => {
-  emit('logout');
-};
 </script>
 
 <template>
@@ -88,45 +76,26 @@ const handleLogout = () => {
         </button>
       </div>
       <div class="flex gap-2 items-center ml-auto">
-        <Popover class="relative" v-if="authedUser">
-          <PopoverButton
-              class="bg-vrc-button/80 border-2 border-vrc-highlight/20 flex gap-2 items-center px-2 py-1 rounded-full text-vrc-text text-xs transition hover:border-vrc-highlight/60"
+        <button
+            v-if="authedUser"
+            type="button"
+            class="bg-vrc-button/80 border-2 border-vrc-highlight/20 flex gap-2 items-center px-2 py-1 rounded-full text-vrc-text text-xs transition hover:border-vrc-highlight/60"
+            @click="openSettings"
+        >
+          <span
+              v-if="!accountAvatarUrl"
+              class="bg-vrc-background border border-vrc-highlight/30 flex font-semibold items-center justify-center rounded-full size-6 text-[10px]"
           >
-            <span
-                v-if="!accountAvatarUrl"
-                class="bg-vrc-background border border-vrc-highlight/30 flex font-semibold items-center justify-center rounded-full size-6 text-[10px]"
-            >
-              {{ accountInitial }}
-            </span>
-            <img
-                v-else
-                :src="accountAvatarUrl"
-                alt=""
-                class="border border-vrc-highlight/30 object-cover rounded-full size-6"
-            />
-            <span class="hidden max-w-[120px] truncate sm:inline">{{ authedUser.displayName }}</span>
-          </PopoverButton>
-          <Transition
-              enter="transition ease-out duration-150"
-              enter-from="opacity-0 translate-y-2"
-              enter-to="opacity-100 translate-y-0"
-              leave="transition ease-in duration-100"
-              leave-from="opacity-100 translate-y-0"
-              leave-to="opacity-0 translate-y-2"
-          >
-            <PopoverPanel
-                class="absolute bg-vrc-background-secondary border-2 border-vrc-highlight/30 mt-2 p-3 right-0 rounded-md shadow-[0_18px_30px_-24px_rgba(0,0,0,0.8)] text-vrc-text text-xs w-48"
-            >
-              <div class="mb-2">
-                <p class="font-semibold">{{ authedUser.displayName }}</p>
-                <p v-if="authedUser.username" class="text-[10px] text-vrc-text/60">
-                  {{ authedUser.username }}
-                </p>
-              </div>
-              <VrcButton size="sm" variant="secondary" @click="handleLogout">ログアウト</VrcButton>
-            </PopoverPanel>
-          </Transition>
-        </Popover>
+            {{ accountInitial }}
+          </span>
+          <img
+              v-else
+              :src="accountAvatarUrl"
+              alt=""
+              class="border border-vrc-highlight/30 object-cover rounded-full size-6"
+          />
+          <span class="hidden max-w-[120px] truncate sm:inline">{{ authedUser.displayName }}</span>
+        </button>
 
         <button
             type="button"

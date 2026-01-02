@@ -2,6 +2,6 @@ export {
   useNotificationPreferences as useFriendNotifications,
 } from './notifications/useNotificationPreferences';
 export type {
-  FriendNotificationPreference,
-  FriendNotificationPreferencePatch,
+  FriendNotification,
+  FriendNotificationPatch,
 } from '../domain/notifications';
