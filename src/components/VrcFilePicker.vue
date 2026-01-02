@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {computed, ref} from 'vue';
 import {FolderOpenIcon} from 'lucide-vue-next';
+import {useI18n} from 'vue-i18n';
 
 const props = withDefaults(defineProps<{
   label: string;
@@ -22,6 +23,7 @@ const emit = defineEmits<{
 }>();
 
 const inputRef = ref<HTMLInputElement | null>(null);
+const {t} = useI18n();
 
 const triggerSelect = () => {
   if (props.disabled) return;
@@ -52,14 +54,14 @@ const buttonClasses = computed(() => {
       <button type="button" :class="buttonClasses" :disabled="props.disabled" @click="triggerSelect">
         <FolderOpenIcon :size="16" />
         <span class="flex-1 min-w-0 truncate">{{ props.value }}</span>
-        <span class="text-[10px] text-vrc-text/60">選択</span>
+        <span class="text-[10px] text-vrc-text/60">{{ t('common.select') }}</span>
       </button>
       <button
           v-if="props.clearable"
           type="button"
           class="border-2 border-vrc-highlight/20 flex h-9 items-center justify-center rounded-md text-sm text-vrc-text/60 transition w-9 disabled:opacity-40 hover:border-vrc-highlight/60 hover:text-vrc-text"
           :disabled="props.disabled"
-          aria-label="クリア"
+          :aria-label="t('common.clear')"
           @click="emit('clear')"
       >
         ×

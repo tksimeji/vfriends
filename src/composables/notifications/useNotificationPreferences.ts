@@ -8,6 +8,7 @@ import type {
   FriendNotificationMap,
   FriendNotificationPatch,
 } from '../../domain/notifications';
+import {t} from '../../i18n';
 
 const preferences = ref<FriendNotificationMap>({});
 const isLoaded = ref(false);
@@ -29,7 +30,7 @@ const load = async () => {
       errorMessage.value = '';
     } catch (error) {
       console.error(error);
-      errorMessage.value = '通知設定の読み込みに失敗しました。';
+      errorMessage.value = t('notifications.errors.loadFailed');
     } finally {
       isLoaded.value = true;
       loadPromise = null;

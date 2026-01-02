@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {KeyRoundIcon, LogInIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
+import {useI18n} from 'vue-i18n';
 import VrcButton from '../../components/VrcButton.vue';
 import VrcInput from '../../components/VrcInput.vue';
 import AuthStatusMessage from './AuthStatusMessage.vue';
@@ -27,18 +28,20 @@ const emit = defineEmits<{
   (event: 'back'): void;
 }>();
 
+const {t} = useI18n();
+
 const hint = computed(() => {
   const method = selectedMethod.value || props.methods[0];
-  if (method === 'totp') return '認証アプリのコードを入力してください。';
-  if (method === 'emailOtp') return 'メールで届いたコードを入力してください。';
-  if (method === 'otp') return 'リカバリーコードを入力してください。';
+  if (method === 'totp') return t('auth.twoFactorMethod.totpHelp');
+  if (method === 'emailOtp') return t('auth.twoFactorMethod.emailHelp');
+  if (method === 'otp') return t('auth.twoFactorMethod.recoveryHelp');
   return '';
 });
 
 const labels: Record<TwoFactorMethod, string> = {
-  totp: '認証アプリ',
-  emailOtp: 'メール',
-  otp: 'リカバリー',
+  totp: t('auth.twoFactorMethod.totpLabel'),
+  emailOtp: t('auth.twoFactorMethod.emailLabel'),
+  otp: t('auth.twoFactorMethod.recoveryLabel'),
 };
 
 const onCodeInput = (event: Event) => {
@@ -48,8 +51,8 @@ const onCodeInput = (event: Event) => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <h2 class="font-semibold text-lg text-vrc-highlight">2FA確認</h2>
-    <p class="text-sm text-vrc-text">2FAコードを入力してください。</p>
+    <h2 class="font-semibold text-lg text-vrc-highlight">{{ t('auth.twoFactorTitle') }}</h2>
+    <p class="text-sm text-vrc-text">{{ t('auth.twoFactorPrompt') }}</p>
 
     <div class="flex flex-col gap-2">
       <select
@@ -65,7 +68,7 @@ const onCodeInput = (event: Event) => {
       </select>
 
       <VrcInput
-          placeholder="2FAコード"
+          :placeholder="t('auth.twoFactorCodePlaceholder')"
           :value="code"
           :disabled="props.isSubmitting"
           @input="onCodeInput"
@@ -85,11 +88,11 @@ const onCodeInput = (event: Event) => {
           :disabled="props.isSubmitting"
           @click="emit('back')"
       >
-        戻る
+        {{ t('auth.back') }}
       </button>
       <VrcButton :disabled="props.isSubmitting" type="button" @click="emit('submit')">
         <LogInIcon/>
-        送信
+        {{ t('auth.submit') }}
       </VrcButton>
     </div>
   </div>

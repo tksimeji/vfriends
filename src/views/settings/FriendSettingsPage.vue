@@ -14,6 +14,7 @@ import {VRChat} from '../../vrchat.ts';
 import SettingsCard from './SettingsCard.vue';
 import SettingsRow from './SettingsRow.vue';
 import type {FriendSettingsContext} from './types';
+import {useI18n} from 'vue-i18n';
 
 const props = defineProps<{
   friend: VRChat.LimitedUserFriend;
@@ -27,6 +28,7 @@ const {
   setEnabled,
   setPreference,
 } = useNotificationPreferences();
+const {t} = useI18n();
 
 onMounted(() => {
   void load();
@@ -68,6 +70,24 @@ const soundOverridden = computed(() => {
 
 const displayedSoundLabel = computed(() =>
   soundLabel(soundInput.value || props.context.globalSound),
+);
+const currentMessageLabel = computed(() =>
+  t('settings.friend.currentLabel', {
+    value: t(
+      messageOverridden.value
+        ? 'settings.friend.currentCustom'
+        : 'settings.friend.currentGlobal',
+    ),
+  }),
+);
+const currentSoundLabel = computed(() =>
+  t('settings.friend.currentLabel', {
+    value: t(
+      soundOverridden.value
+        ? 'settings.friend.currentCustom'
+        : 'settings.friend.currentGlobal',
+    ),
+  }),
 );
 const updatePreference = (patch: Parameters<typeof setPreference>[1]) =>
   setPreference(props.friend.id, patch);
@@ -118,12 +138,12 @@ const previewSound = async () => {
         </div>
       </div>
 
-      <SettingsCard title="通知の配信">
+      <SettingsCard :title="t('settings.friend.deliveryTitle')">
         <SettingsRow>
           <template #description>
             <p class="text-sm text-vrc-text">
               {{
-                notificationsEnabled ? 'トグルスイッチをオフにすると，一時的に通知の配信を停止することができます．' : '現在，通知の配信を停止しています．'
+                notificationsEnabled ? t('settings.friend.deliveryOn') : t('settings.friend.deliveryOff')
               }}
             </p>
           </template>
@@ -136,13 +156,13 @@ const previewSound = async () => {
         </SettingsRow>
       </SettingsCard>
 
-      <SettingsCard title="通知のカスタマイズ">
+      <SettingsCard :title="t('settings.friend.customizeTitle')">
         <SettingsRow>
           <template #description>
             <div class="space-y-1">
               <p class="text-sm text-vrc-text/70">
                 {{
-                  customizeEnabled ? 'このフレンドだけの特別な通知を使用中．トグルスイッチをオフにすると，デフォルトの設定が使用されます．' : 'トグルスイッチをオンにして，このフレンドからの通知を特別なものにできます:)'
+                  customizeEnabled ? t('settings.friend.customizeOn') : t('settings.friend.customizeOff')
                 }}
               </p>
             </div>
@@ -158,22 +178,22 @@ const previewSound = async () => {
 
         <div :class="canCustomize ? '' : 'opacity-50'">
           <VrcInput
-              label="通知メッセージ"
+              :label="t('settings.friend.messageLabel')"
               :value="messageInput"
               :disabled="!canCustomize"
               :placeholder="props.context.globalMessageTemplate"
               @blur="commitMessage"
               @input="messageInput = ($event.target as HTMLInputElement).value"
           />
-          <p class="mt-1 text-vrc-text/70 text-xs">空欄は全体設定を使用</p>
+          <p class="mt-1 text-vrc-text/70 text-xs">{{ t('settings.friend.messageHelp') }}</p>
           <p class="text-[10px] text-vrc-text/60">
-            現在: {{ messageOverridden ? '個別設定' : '全体設定' }}
+            {{ currentMessageLabel }}
           </p>
 
           <VrcFilePicker
-              label="通知サウンド"
+              :label="t('settings.friend.soundLabel')"
               :value="displayedSoundLabel"
-              helper="クリックして音声ファイルを選択"
+              :helper="t('settings.friend.soundHelp')"
               :disabled="!canCustomize"
               :clearable="true"
               accept=".mp3,.wav,.ogg,.flac,.m4a,audio/*"
@@ -181,7 +201,7 @@ const previewSound = async () => {
               @clear="clearSound"
           />
           <p class="text-[10px] text-vrc-text/60">
-            現在: {{ soundOverridden ? '個別設定' : '全体設定' }}
+            {{ currentSoundLabel }}
           </p>
           <div class="flex flex-wrap gap-2 mt-2">
             <VrcButton
@@ -189,7 +209,7 @@ const previewSound = async () => {
                 :disabled="!canCustomize"
                 @click="previewSound"
             >
-              テスト再生
+              {{ t('common.testSound') }}
             </VrcButton>
           </div>
         </div>

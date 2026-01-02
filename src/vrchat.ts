@@ -2,6 +2,7 @@ import {Temporal} from '@js-temporal/polyfill';
 import {Vibrant} from 'node-vibrant/browser';
 import type {Palette, Swatch} from '@vibrant/color';
 import {fetchCachedImageData} from './data/images';
+import {t} from './i18n';
 
 export namespace VRChat {
   /**
@@ -93,15 +94,15 @@ export namespace VRChat {
   export const statusLabel = (statusKey: string) => {
     switch (statusKey) {
       case 'join me':
-        return 'だれでもおいで';
+        return t('status.joinMe');
       case 'active':
-        return 'オンライン';
+        return t('status.active');
       case 'ask me':
-        return 'きいてみてね';
+        return t('status.askMe');
       case 'busy':
-        return '取り込み中';
+        return t('status.busy');
       default:
-        return 'オフライン';
+        return t('status.offline');
     }
   };
 
@@ -281,16 +282,16 @@ export namespace VRChat {
       const diffMinutes = Math.floor(diff.total({unit: 'minute'}));
 
       if (diffMinutes < 60) {
-        return `${diffMinutes}分前`;
+        return t('time.minutesAgo', {count: diffMinutes});
       }
 
       const diffHours = Math.floor(diff.total({unit: 'hour'}));
       if (diffHours < 24) {
-        return `${diffHours}時間前`;
+        return t('time.hoursAgo', {count: diffHours});
       }
 
       const diffDays = Math.floor(diffHours / 24);
-      return `${diffDays}日前`;
+      return t('time.daysAgo', {count: diffDays});
     } catch {
       return null;
     }

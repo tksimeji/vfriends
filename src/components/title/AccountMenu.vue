@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import UserAvatar from './UserAvatar.vue';
-import type {VRChat} from '../vrchat.ts';
+import UserAvatar from '../UserAvatar.vue';
+import type {VRChat} from '../../vrchat.ts';
 
 const props = defineProps<{
   user: VRChat.CurrentUser;

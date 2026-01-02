@@ -1,11 +1,12 @@
 import {computed, ref} from 'vue';
 import {fetchNotificationSettings, setNotificationSettings} from '../../data/notifications';
 import type {NotificationConfig} from '../../domain/notifications';
+import {t} from '../../i18n';
 
-const DEFAULT_TEMPLATE = '{name} is online';
+const defaultTemplate = () => t('notifications.defaultMessageTemplate');
 
 const settings = ref<NotificationConfig>({
-  messageTemplate: DEFAULT_TEMPLATE,
+  messageTemplate: defaultTemplate(),
   sound: '',
 });
 const isLoaded = ref(false);
@@ -20,13 +21,13 @@ const load = async () => {
     try {
       const result = await fetchNotificationSettings();
       settings.value = {
-        messageTemplate: result?.messageTemplate ?? DEFAULT_TEMPLATE,
+        messageTemplate: result?.messageTemplate ?? defaultTemplate(),
         sound: result?.sound ?? '',
       };
       errorMessage.value = '';
     } catch (error) {
       console.error(error);
-      errorMessage.value = '通知設定の読み込みに失敗しました。';
+      errorMessage.value = t('notifications.errors.loadFailed');
     } finally {
       isLoaded.value = true;
       loadPromise = null;
@@ -46,7 +47,7 @@ const save = async () => {
     errorMessage.value = '';
   } catch (error) {
     console.error(error);
-    errorMessage.value = '通知設定の保存に失敗しました。';
+    errorMessage.value = t('notifications.errors.saveFailed');
   } finally {
     isSaving.value = false;
   }
@@ -55,8 +56,8 @@ const save = async () => {
 const previewText = computed(() =>
   settings.value.messageTemplate
     .trim()
-    .replace('{name}', 'VRChat User')
-    .replace('{displayName}', 'VRChat User') || DEFAULT_TEMPLATE,
+    .replace('{name}', t('common.vrchatUser'))
+    .replace('{displayName}', t('common.vrchatUser')) || defaultTemplate(),
 );
 
 export const useNotificationSettings = () => {

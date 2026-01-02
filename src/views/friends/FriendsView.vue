@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
+import {useI18n} from 'vue-i18n';
 import {useFriends} from '../../composables/useFriends';
 import type {VRChat} from '../../vrchat.ts';
 import SettingsModal from '../settings/SettingsModal.vue';
@@ -47,6 +48,16 @@ const settingsModalRef = ref<SettingsModalHandle | null>(null);
 const searchActive = computed(() => props.searchQuery.trim().length > 0);
 const totalCount = computed(() => sortedItems.value.length);
 const filteredCount = computed(() => filteredFriends.value.length);
+const {t} = useI18n();
+const isAuthed = computed(() => Boolean(props.authedUser));
+const countLabel = computed(() =>
+  searchActive.value
+    ? t('friends.countFiltered', {
+      filtered: filteredCount.value,
+      total: totalCount.value,
+    })
+    : t('friends.count', {count: totalCount.value}),
+);
 const statusMessage = computed<FriendsStatusMessage | null>(() => {
   if (errorMessage.value) {
     return {
@@ -56,19 +67,19 @@ const statusMessage = computed<FriendsStatusMessage | null>(() => {
   }
   if (isLoading.value && !hasFriends.value) {
     return {
-      text: 'フレンド一覧を読み込み中...',
+      text: t('friends.loading'),
       tone: 'muted',
     };
   }
   if (!hasFriends.value) {
     return {
-      text: 'フレンドが見つかりません。',
+      text: t('friends.empty'),
       tone: 'muted',
     };
   }
   if (searchActive.value && filteredCount.value === 0) {
     return {
-      text: '検索結果が見つかりません。',
+      text: t('friends.searchEmpty'),
       tone: 'muted',
     };
   }
@@ -86,13 +97,28 @@ watch(
 );
 
 onMounted(() => {
-  void refresh();
-  startAutoRefresh();
+  if (isAuthed.value) {
+    void refresh();
+    startAutoRefresh();
+  }
 });
 
 onBeforeUnmount(() => {
   stopAutoRefresh();
 });
+
+watch(
+  isAuthed,
+  (next) => {
+    if (next) {
+      void refresh();
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
+  },
+  {immediate: false},
+);
 
 const openSettings = () => {
   settingsModalRef.value?.openGlobal();
@@ -133,9 +159,9 @@ defineExpose({
         {{ statusMessage.text }}
       </p>
       <div class="flex gap-3 items-center">
-        <span>{{ searchActive ? `${filteredCount} / ${totalCount}件` : `${totalCount}件` }}</span>
-        <span class="hiddensm:inline">カードをクリックで通知設定</span>
-        <span v-if="isLoading" class="text-vrc-highlight/70">更新中...</span>
+        <span>{{ countLabel }}</span>
+        <span class="hiddensm:inline">{{ t('friends.clickCardHint') }}</span>
+        <span v-if="isLoading" class="text-vrc-highlight/70">{{ t('friends.updating') }}</span>
       </div>
     </div>
 

@@ -9,6 +9,7 @@ import {VRChat} from '../../vrchat.ts';
 import AppSettingsPage from './AppSettingsPage.vue';
 import FriendSettingsPage from './FriendSettingsPage.vue';
 import SettingsSidebar from './SettingsSidebar.vue';
+import {useI18n} from 'vue-i18n';
 
 const props = defineProps<{
   currentUser: VRChat.CurrentUser | null;
@@ -50,6 +51,7 @@ const panelKey = computed(() => (isGlobalView.value ? 'global' : activeFriendId.
 const panelScrollClass = computed(() =>
   isPanelAnimating.value ? 'h-full overflow-hidden' : 'h-full overflow-y-auto',
 );
+const {t} = useI18n();
 
 // Friend settings updates are handled inside FriendSettingsPage.
 
@@ -231,7 +233,7 @@ const handlePanelAfterLeave = () => {
                   }"
               />
               <div v-else class="p-5 text-sm text-vrc-text/70">
-                ここに表示できる設定がありません。
+                {{ t('settings.noSettings') }}
               </div>
             </div>
           </Transition>

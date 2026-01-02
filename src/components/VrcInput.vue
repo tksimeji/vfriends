@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {EyeIcon, EyeOffIcon} from 'lucide-vue-next';
 import {computed, InputTypeHTMLAttribute, ref, useAttrs} from 'vue';
+import {useI18n} from 'vue-i18n';
 
 defineOptions({inheritAttrs: false});
 
@@ -17,6 +18,7 @@ const props = withDefaults(defineProps<{
 });
 
 const attrs = useAttrs();
+const {t} = useI18n();
 
 const showPassword = ref(false);
 const isPassword = computed(() => props.type === 'password');
@@ -67,7 +69,7 @@ const togglePassword = () => {
           type="button"
           class="cursor-pointer px-2 text-vrc-subtext transition hover:text-vrc-highlight"
           @click="togglePassword"
-          :aria-label="showPassword ? 'Hide password' : 'Show password'"
+          :aria-label="showPassword ? t('common.hidePassword') : t('common.showPassword')"
       >
         <EyeOffIcon v-if="showPassword"/>
         <EyeIcon v-else/>

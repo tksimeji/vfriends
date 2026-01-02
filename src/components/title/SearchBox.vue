@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {SearchIcon, XIcon} from 'lucide-vue-next';
 import {computed, nextTick, onBeforeUpdate, onMounted, ref, watch} from 'vue';
-import {VRChat} from '../vrchat.ts';
+import {useI18n} from 'vue-i18n';
+import {VRChat} from '../../vrchat.ts';
 
 const props = defineProps<{
   modelValue: string;
@@ -20,6 +21,11 @@ const normalizedQuery = computed(() => props.modelValue.trim().toLowerCase());
 const activeIndex = ref(-1);
 const suggestionRefs = ref<HTMLElement[]>([]);
 const inputRef = ref<HTMLInputElement | null>(null);
+const {t} = useI18n();
+
+const resolvedPlaceholder = computed(
+  () => props.placeholder ?? t('friends.searchPlaceholderTitlebar'),
+);
 
 const MAX_VISIBLE = 10;
 
@@ -130,7 +136,7 @@ onMounted(() => {
           ref="inputRef"
           type="text"
           class="grow outline-none py-2 text-vrc-text text-xs"
-          placeholder="ここでフレンドを検索"
+          :placeholder="resolvedPlaceholder"
           data-tauri-drag-region="false"
           @input="handleInput"
           @keydown="handleKeydown"

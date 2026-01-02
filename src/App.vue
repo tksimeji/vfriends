@@ -2,7 +2,7 @@
 import {invoke} from '@tauri-apps/api/core';
 import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue';
-import TitleBar from './components/TitleBar.vue';
+import TitleBar from './components/title/TitleBar.vue';
 import './style.css';
 import AuthModal from './views/auth/AuthModal.vue';
 import FriendsView from './views/friends/FriendsView.vue';

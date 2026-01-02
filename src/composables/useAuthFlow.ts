@@ -3,6 +3,7 @@ import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {computed, onBeforeUnmount, onMounted, reactive, shallowRef, toRefs} from 'vue';
 import {VRChat} from '../vrchat.ts';
 import {useAuthSession} from './useAuthSession';
+import {t} from '../i18n';
 
 export type UseLoginFlowOptions = {
   onLoginSuccess?: (user: VRChat.CurrentUser | null) => void;
@@ -97,7 +98,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
 
   const failWith = (message: string) => {
     state.isSubmitting = false;
-    state.errorMessage = message || '認証に失敗しました。';
+    state.errorMessage = message || t('auth.errors.authFailed');
     state.successMessage = '';
     state.activeAction = null;
   };
@@ -113,7 +114,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
         state.selectedTwoFactorMethod = state.twoFactorMethods[0] ?? '';
         state.currentStep = 'twoFactor';
         state.errorMessage = state.twoFactorMethods.length === 0
-          ? '未対応の2FA方式です。'
+          ? t('auth.errors.unsupported2fa')
           : '';
         state.successMessage = '';
         state.activeAction = null;
@@ -121,11 +122,11 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
       }
       case 'success': {
         state.isSubmitting = false;
-        state.successMessage = 'ログインに成功しました。';
+        state.successMessage = t('auth.errors.loginSuccess');
         state.currentStep = 'success';
         state.authedUser = event.user ?? {
           id: '',
-          displayName: state.username || 'VRChat User',
+          displayName: state.username || t('common.vrchatUser'),
           username: state.username || undefined,
           currentAvatarImageUrl: '',
           profilePicOverride: '',
@@ -159,7 +160,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
 
     const trimmedUsername = state.username.trim();
     if (!trimmedUsername || !state.password) {
-      state.errorMessage = 'ユーザー名とパスワードを入力してください。';
+      state.errorMessage = t('auth.errors.missingCredentials');
       return;
     }
 
@@ -171,7 +172,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
       });
     } catch (error) {
       markIdle();
-      state.errorMessage = 'ログインに失敗しました。通信状態を確認してください。';
+      state.errorMessage = t('auth.errors.loginFailedNetwork');
       console.error(error);
     }
   };
@@ -181,12 +182,12 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
     clearStatus();
 
     if (!state.twoFactorCode) {
-      state.errorMessage = '2FAコードを入力してください。';
+      state.errorMessage = t('auth.errors.missingTwoFactor');
       return;
     }
     const method = currentTwoFactorMethod.value;
     if (!method) {
-      state.errorMessage = '2FA方式を選択してください。';
+      state.errorMessage = t('auth.errors.selectTwoFactor');
       return;
     }
 
@@ -198,7 +199,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
       });
     } catch (error) {
       markIdle();
-      state.errorMessage = '2FAの検証に失敗しました。もう一度お試しください。';
+      state.errorMessage = t('auth.errors.verifyFailed');
       console.error(error);
     }
   };

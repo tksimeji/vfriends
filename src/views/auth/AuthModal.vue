@@ -3,6 +3,7 @@ import AuthCredentialsPage from './AuthCredentialsPage.vue';
 import AuthSuccessPage from './AuthSuccessPage.vue';
 import Auth2FaPage from './Auth2FaPage.vue';
 import {useAuthFlow} from '../../composables/useAuthFlow.ts';
+import {useI18n} from 'vue-i18n';
 
 const {
   username,
@@ -21,6 +22,8 @@ const {
   handleSuccessClose,
   handleLogout,
 } = useAuthFlow();
+
+const {t} = useI18n();
 </script>
 
 <template>
@@ -51,7 +54,7 @@ const {
 
     <AuthSuccessPage
         v-else
-        :user="authedUser ?? { id: '', displayName: 'VRChat User', currentAvatarImageUrl: '', profilePicOverride: '', userIcon: '' }"
+        :user="authedUser ?? { id: '', displayName: t('common.vrchatUser'), currentAvatarImageUrl: '', profilePicOverride: '', userIcon: '' }"
         :is-submitting="isSubmitting"
         @close="handleSuccessClose"
         @logout="handleLogout"

@@ -7,6 +7,7 @@ import UserAvatar from '../../components/UserAvatar.vue';
 import VrcButton from '../../components/VrcButton.vue';
 import VrcInput from '../../components/VrcInput.vue';
 import {VRChat} from '../../vrchat.ts';
+import {useI18n} from 'vue-i18n';
 
 const props = defineProps<{
   currentUser: VRChat.CurrentUser | null;
@@ -29,6 +30,7 @@ type RecycleScrollerHandle = {
 const scrollerRef = ref<RecycleScrollerHandle | null>(null);
 const isAlive = ref(true);
 const searchQuery = ref('');
+const {t} = useI18n();
 const filteredFriends = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
   if (!query) return props.friends;
@@ -117,10 +119,10 @@ onBeforeUnmount(() => {
             :size="40"
             fallback-class="font-semibold text-[10px]"
         />
-        <span class="flex-1 font-semibold min-w-0 truncate">アプリ設定</span>
+        <span class="flex-1 font-semibold min-w-0 truncate">{{ t('common.appSettings') }}</span>
       </VrcButton>
       <VrcInput
-          placeholder="検索"
+          :placeholder="t('friends.searchPlaceholder')"
           :value="searchQuery"
           @input="searchQuery = ($event.target as HTMLInputElement).value"
       >

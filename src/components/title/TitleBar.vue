@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import {computed} from 'vue';
-import type {VRChat} from '../vrchat.ts';
+import type {VRChat} from '../../vrchat.ts';
 import AccountMenu from './AccountMenu.vue';
-import TitleBarSearch from './TitleBarSearch.vue';
+import SearchBox from './SearchBox.vue';
 
 const props = defineProps<{
   query: string;
@@ -40,7 +40,7 @@ const openSettings = () => {
     </div>
 
     <div class="flex flex-1 justify-center min-w-0" data-tauri-drag-region>
-      <TitleBarSearch
+      <SearchBox
           v-if="isAuthed && !hideSearch"
           :model-value="query"
           :suggestions="props.suggestions ?? []"

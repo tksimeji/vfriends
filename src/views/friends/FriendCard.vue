@@ -5,6 +5,7 @@ import {useNotificationPreferences} from '../../composables/notifications/useNot
 import {useDominantColor} from '../../composables/useDominantColor';
 import StatusBadge from '../../components/StatusBadge.vue';
 import {VRChat} from '../../vrchat.ts';
+import {useI18n} from 'vue-i18n';
 
 const props = withDefaults(defineProps<{
   friend: VRChat.LimitedUserFriend;
@@ -26,8 +27,12 @@ const avatarUrl = computed(() => VRChat.avatarUrl(props.friend));
 const colorSource = computed(() => props.friend);
 const {overlayStyle, rgb} = useDominantColor(colorSource);
 const isHovered = ref(false);
+const {t} = useI18n();
 
 const lastOnline = computed(() => VRChat.formatLastOnline(props.friend));
+const lastOnlineLabel = computed(() =>
+  lastOnline.value ? t('friends.lastOnline', {value: lastOnline.value}) : '',
+);
 
 const notificationsEnabled = computed(() => isEnabled(props.friend.id));
 
@@ -76,10 +81,9 @@ watch(rgb, () => {
           label-class="text-vrc-highlight/60"
           :size="12"
       />
-      <span v-if="lastOnline" class="text-vrc-text text-xs">
-        最終オンライン：{{ lastOnline }}
+      <span v-if="lastOnlineLabel" class="text-vrc-text text-xs">
+        {{ lastOnlineLabel }}
       </span>
     </div>
   </article>
 </template>
-

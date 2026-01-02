@@ -1,5 +1,6 @@
 import {computed, ref} from 'vue';
 import {fetchFriends} from '../data/friends';
+import {t} from '../i18n';
 import {VRChat} from '../vrchat.ts';
 
 const AUTO_REFRESH_MS = 30000;
@@ -23,7 +24,7 @@ export const useFriends = () => {
       entries.value = VRChat.mergeFriends(entries.value, nextEntries);
     } catch (error) {
       console.error(error);
-      errorMessage.value = 'フレンド一覧の取得に失敗しました。';
+      errorMessage.value = t('friends.errors.fetchFailed');
     } finally {
       isLoading.value = false;
     }

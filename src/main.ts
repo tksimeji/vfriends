@@ -1,12 +1,14 @@
 import {createApp} from 'vue';
 import {createVfm} from 'vue-final-modal';
 import App from './App.vue';
+import {i18n} from './i18n';
 import 'vue-final-modal/style.css';
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 
 const app = createApp(App);
 const vfm = createVfm();
 app.use(vfm);
+app.use(i18n);
 app.mount('#app');
 
 const setupTitlebarInset = () => {
