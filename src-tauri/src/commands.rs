@@ -111,13 +111,13 @@ pub fn set_notification_settings(
 
 #[tauri::command]
 pub async fn preview_notification_sound(app: AppHandle, sound: Option<String>) -> AppResult<()> {
-    crate::notifications::preview_sound(&app, sound).await;
+    crate::notifier::preview_sound(&app, sound).await;
     Ok(())
 }
 
 #[tauri::command]
 pub fn save_notification_sound(app: AppHandle, name: String, bytes: Vec<u8>) -> AppResult<String> {
-    let path = crate::notifications::sound::store_sound_file(&app, &name, &bytes)?;
+    let path = crate::notifier::sound::store_sound_file(&app, &name, &bytes)?;
     Ok(path.to_string_lossy().to_string())
 }
 
@@ -138,7 +138,7 @@ pub async fn fetch_cached_image_data(
     })?;
 
     let data =
-        crate::notifications::fetch_cached_image_data_with_client(url, &client, &user_agent).await;
+        crate::notifier::fetch_cached_image_data_with_client(url, &client, &user_agent).await;
     Ok(data)
 }
 

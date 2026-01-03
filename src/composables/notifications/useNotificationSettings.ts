@@ -3,7 +3,7 @@ import {fetchNotificationSettings, setNotificationSettings} from '../../data/not
 import type {NotificationConfig} from '../../domain/notifications';
 import {t} from '../../i18n';
 
-const defaultTemplate = () => t('notifications.defaultMessageTemplate');
+const defaultTemplate = () => t('notifier.defaultMessageTemplate');
 
 const settings = ref<NotificationConfig>({
   messageTemplate: defaultTemplate(),
@@ -27,7 +27,7 @@ const load = async () => {
       errorMessage.value = '';
     } catch (error) {
       console.error(error);
-      errorMessage.value = t('notifications.errors.loadFailed');
+      errorMessage.value = t('notifier.errors.loadFailed');
     } finally {
       isLoaded.value = true;
       loadPromise = null;
@@ -47,7 +47,7 @@ const save = async () => {
     errorMessage.value = '';
   } catch (error) {
     console.error(error);
-    errorMessage.value = t('notifications.errors.saveFailed');
+    errorMessage.value = t('notifier.errors.saveFailed');
   } finally {
     isSaving.value = false;
   }

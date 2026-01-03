@@ -30,7 +30,7 @@ const load = async () => {
       errorMessage.value = '';
     } catch (error) {
       console.error(error);
-      errorMessage.value = t('notifications.errors.loadFailed');
+      errorMessage.value = t('notifier.errors.loadFailed');
     } finally {
       isLoaded.value = true;
       loadPromise = null;

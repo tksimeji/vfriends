@@ -1,6 +1,6 @@
 mod authv2;
 mod commands;
-mod notifications;
+mod notifier;
 mod pipeline;
 mod shell;
 mod utils;

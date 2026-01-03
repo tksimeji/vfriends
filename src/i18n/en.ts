@@ -94,13 +94,13 @@ const en = {
     friend: {
       deliveryTitle: 'Notification delivery',
       deliveryOn:
-        'Turn the toggle off to pause notifications temporarily.',
+        'Turn the toggle off to pause notifier temporarily.',
       deliveryOff: 'Notifications are currently paused.',
-      customizeTitle: 'Customize notifications',
+      customizeTitle: 'Customize notifier',
       customizeOn:
-        'Custom notifications are enabled for this friend. Turn off to use defaults.',
+        'Custom notifier are enabled for this friend. Turn off to use defaults.',
       customizeOff:
-        'Turn this on to customize notifications for this friend.',
+        'Turn this on to customize notifier for this friend.',
       messageLabel: 'Notification message',
       messageHelp: 'Empty uses global settings',
       soundLabel: 'Notification sound',

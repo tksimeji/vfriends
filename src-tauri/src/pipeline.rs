@@ -20,9 +20,15 @@ pub fn start_with_cookie_header(
     let Some(header) = cookie_header else {
         return;
     };
+    if header.trim().is_empty() {
+        eprintln!("Pipeline start skipped: cookie header is empty");
+        return;
+    }
     let Some(auth_token) = auth_token_from_cookie_header(&header) else {
+        eprintln!("Pipeline start skipped: auth token not found in cookie header");
         return;
     };
+    eprintln!("Pipeline start: auth token found, starting websocket listener.");
     start(app, auth_token, user_agent);
 }
 
@@ -77,12 +83,11 @@ async fn run_pipeline(app: AppHandle, auth_token: String, user_agent: Option<Str
 fn auth_token_from_cookie_header(cookie_header: &str) -> Option<String> {
     cookie_header.split(';').find_map(|entry| {
         let mut parts = entry.trim().splitn(2, '=');
-        let name = parts.next()?;
-        let value = parts.next()?;
-        if name == "auth" {
-            Some(value.trim_matches('"').to_string())
-        } else {
-            None
+        let name = parts.next()?.trim();
+        let value = parts.next()?.trim();
+        match name {
+            "auth" | "authToken" | "auth_token" => Some(value.trim_matches('"').to_string()),
+            _ => None,
         }
     })
 }

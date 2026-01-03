@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use vrchatapi::models;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -21,8 +20,8 @@ impl Default for AppSettings {
 }
 
 impl AppSettings {
-    pub fn friend_settings_of(&self, friend: &models::LimitedUserFriend) -> Option<&FriendSettings> {
-        self.friend_settings.get(&friend.id)
+    pub fn friend_settings_of(&self, friend_id: &str) -> Option<&FriendSettings> {
+        self.friend_settings.get(friend_id)
     }
 }
 
