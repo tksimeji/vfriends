@@ -8,13 +8,14 @@ pub use friend_online::notify_friend_online;
 use std::path::PathBuf;
 use tauri::AppHandle;
 
-pub async fn preview_sound(_app: &AppHandle, sound: Option<String>) {
-    let Some(value) = sound else {
+pub async fn preview_sound(app: &AppHandle, sound: Option<String>) {
+    let Some(sound_path) = sound else {
+        let _ = windows_os::show_notification_sound_preview(app);
         return;
     };
-    let trimmed = value.trim();
-    if trimmed.is_empty() {
+    let trimmed_path = sound_path.trim();
+    if trimmed_path.is_empty() {
         return;
     }
-    play_custom_sound(PathBuf::from(trimmed));
+    play_custom_sound(PathBuf::from(trimmed_path));
 }

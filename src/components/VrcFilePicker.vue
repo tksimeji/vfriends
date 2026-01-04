@@ -49,7 +49,7 @@ const buttonClasses = computed(() => {
 
 <template>
   <div class="space-y-1">
-    <label class="block text-vrc-subtext text-xs">{{ props.label }}</label>
+    <label class="block font-semibold text-md text-vrc-text">{{ props.label }}</label>
     <div class="flex gap-2 items-center">
       <button type="button" :class="buttonClasses" :disabled="props.disabled" @click="triggerSelect">
         <FolderOpenIcon :size="16" />

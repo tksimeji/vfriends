@@ -3,15 +3,15 @@ import {computed, onMounted, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
 import StatusBadge from '../../components/StatusBadge.vue';
 import UserAvatar from '../../components/UserAvatar.vue';
-import VrcButton from '../../components/VrcButton.vue';
 import VrcFilePicker from '../../components/VrcFilePicker.vue';
 import VrcInput from '../../components/VrcInput.vue';
 import VrcToggle from '../../components/VrcToggle.vue';
 import {useDominantColor} from '../../composables/useDominantColor';
-import {fetchFriendSettings, previewNotificationSound, setFriendSettings} from '../../invokes';
+import {fetchFriendSettings, setFriendSettings} from '../../invokes';
 import {FriendSettings} from '../../types.ts';
 import {resolveSoundPath, soundLabel} from '../../utils/notificationSound';
 import {VRChat} from '../../vrchat.ts';
+import NotificationPreview from './NotificationPreview.vue';
 import SettingsCard from './SettingsCard.vue';
 import SettingsRow from './SettingsRow.vue';
 import type {FriendSettingsContext} from './types';
@@ -66,35 +66,8 @@ watch(
     {immediate: true},
 );
 
-const messageOverridden = computed(() => {
-  if (!customizeEnabled.value) return false;
-  return settings.value?.messageOverride !== undefined &&
-      settings.value?.messageOverride !== null;
-});
-
-const soundOverridden = computed(() => {
-  if (!customizeEnabled.value) return false;
-  return settings.value?.soundOverride !== undefined &&
-      settings.value?.soundOverride !== null;
-});
-
 const displayedSoundLabel = computed(() =>
     soundLabel(soundDraft.value || props.context.globalSound),
-);
-const currentLabel = (overridden: boolean) =>
-    t('settings.friend.currentLabel', {
-      value: t(
-          overridden
-              ? 'settings.friend.currentCustom'
-              : 'settings.friend.currentGlobal',
-      ),
-    });
-
-const currentMessageLabel = computed(() =>
-    currentLabel(messageOverridden.value),
-);
-const currentSoundLabel = computed(() =>
-    currentLabel(soundOverridden.value),
 );
 
 const patchSettings = async (patch: Partial<FriendSettings>) => {
@@ -116,7 +89,9 @@ const handleMessageInput = (event: Event) => {
 };
 
 const commitMessage = () => {
-  void patchSettings({messageOverride: messageDraft.value});
+  // messageDraft.value = messageDraft.value;
+  const trimmed = messageDraft.value.trim();
+  void patchSettings({messageOverride: trimmed ?? null});
 };
 
 const handleSelectSound = async (file: File | null) => {
@@ -128,25 +103,20 @@ const handleSelectSound = async (file: File | null) => {
 
 const handleClearSound = () => {
   soundDraft.value = '';
-  void patchSettings({soundOverride: ''});
-};
-
-const handlePreviewSound = async () => {
-  const value = soundDraft.value.trim() || props.context.globalSound;
-  await previewNotificationSound(value ? value : null);
+  void patchSettings({soundOverride: null});
 };
 </script>
 
 <template>
   <div class="min-h-full p-5" :style="overlayStyle">
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 select-none">
       <div class="flex gap-3 items-center">
         <UserAvatar :user="friend" :size="48"/>
         <div>
           <p class="font-bold text-xl text-vrc-friend">{{ friend.displayName }}</p>
           <StatusBadge
-              class="gap-2 text-vrc-text/70 text-xs"
-              label-class="text-vrc-text/70 text-xs"
+              class="gap-2 text-vrc-text text-xs"
+              label-class="text-vrc-text text-xs"
               :size="12"
               :friend="friend"
           />
@@ -173,11 +143,15 @@ const handlePreviewSound = async () => {
         </SettingsRow>
       </SettingsCard>
 
-      <SettingsCard :title="t('settings.friend.customizeTitle')">
+      <SettingsCard v-if="notificationsEnabled" :title="t('settings.friend.customizeTitle')">
+        <div class="flex justify-center">
+          <NotificationPreview :user="props.friend" :settings="settings"/>
+        </div>
+
         <SettingsRow>
           <template #description>
             <div class="space-y-1">
-              <p class="text-sm text-vrc-text/70">
+              <p class="text-sm text-vrc-text">
                 {{
                   customizeEnabled
                       ? t('settings.friend.customizeOn')
@@ -195,7 +169,7 @@ const handlePreviewSound = async () => {
           </template>
         </SettingsRow>
 
-        <div :class="canCustomize ? '' : 'opacity-50'">
+        <div class="flex flex-col gap-4" :class="canCustomize ? '' : 'opacity-50'">
           <VrcInput
               :label="t('settings.friend.messageLabel')"
               :value="messageDraft"
@@ -204,10 +178,6 @@ const handlePreviewSound = async () => {
               @blur="commitMessage"
               @input="handleMessageInput"
           />
-          <p class="mt-1 text-vrc-text/70 text-xs">{{ t('settings.friend.messageHelp') }}</p>
-          <p class="text-[10px] text-vrc-text/60">
-            {{ currentMessageLabel }}
-          </p>
 
           <VrcFilePicker
               :label="t('settings.friend.soundLabel')"
@@ -219,18 +189,6 @@ const handlePreviewSound = async () => {
               @select="handleSelectSound"
               @clear="handleClearSound"
           />
-          <p class="text-[10px] text-vrc-text/60">
-            {{ currentSoundLabel }}
-          </p>
-          <div class="flex flex-wrap gap-2 mt-2">
-            <VrcButton
-                size="sm"
-                :disabled="!canCustomize"
-                @click="handlePreviewSound"
-            >
-              {{ t('common.testSound') }}
-            </VrcButton>
-          </div>
         </div>
       </SettingsCard>
     </div>

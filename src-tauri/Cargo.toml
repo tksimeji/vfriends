@@ -33,7 +33,7 @@ futures-util = "0.3"
 rodio = "0.20"
 base64 = "0.22"
 mime_guess = "2.0"
-windows = { version = "0.62.2", features = ["Data", "Data_Xml", "Data_Xml_Dom", "UI", "UI_Notifications", "Win32_Foundation", "Win32_System_Com"] }
+windows = { version = "0.62.2", features = ["Data", "Data_Xml", "Data_Xml_Dom", "UI", "UI_Notifications", "Win32_Foundation", "Win32_System_Com", "Win32_System_Diagnostics"] }
 log = "0.4.29"
 env_logger = "0.11.8"
 cookie = "0.18.1"

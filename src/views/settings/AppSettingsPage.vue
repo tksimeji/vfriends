@@ -74,7 +74,7 @@ const handlePreviewSound = () => {
         />
         <div class="flex flex-col items-center text-vrc-text">
           <p class="font-bold text-2xl">{{ displayName }}</p>
-          <p v-if="showUsername" class="text-sm text-vrc-text/60">
+          <p v-if="showUsername" class="text-sm text-vrc-text">
             {{ username }}
           </p>
         </div>
@@ -101,7 +101,7 @@ const handlePreviewSound = () => {
     </SettingsCard>
 
     <SettingsCard :title="t('settings.notificationsTitle')">
-      <p class="text-sm text-vrc-text/70">
+      <p class="text-sm text-vrc-text">
         {{ t('settings.notificationsDescription') }}
       </p>
 
@@ -111,7 +111,7 @@ const handlePreviewSound = () => {
           :placeholder="t('settings.notificationMessagePlaceholder')"
           @input="handleMessageInput"
       />
-      <p class="text-vrc-text/70 text-xs">{{ t('common.preview', {text: previewText}) }}</p>
+      <p class="text-vrc-text text-xs">{{ t('common.preview', {text: previewText}) }}</p>
 
       <VrcFilePicker
           :label="t('settings.notificationSoundLabel')"

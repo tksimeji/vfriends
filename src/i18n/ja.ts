@@ -108,6 +108,7 @@ const ja = {
       currentLabel: '現在: {value}',
       currentCustom: '個別設定',
       currentGlobal: '全体設定',
+      previewSound: 'サウンドをプレビュー',
     },
   },
   status: {

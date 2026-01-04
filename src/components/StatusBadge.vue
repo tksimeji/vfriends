@@ -31,7 +31,7 @@ const colorClass = computed(() => VRChat.statusColorClass(resolvedStatusKey.valu
 </script>
 
 <template>
-  <span class="gap-2 inline-flex items-center" :class="attrs.class" :style="attrs.style">
+  <span class="gap-2 inline-flex items-center select-none" :class="attrs.class" :style="attrs.style">
     <span
         class="rounded-full"
         :class="colorClass"

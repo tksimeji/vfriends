@@ -1,15 +1,14 @@
+use std::time::Duration;
 use tauri::AppHandle;
-use windows::{
-    core::{Interface, Result, HSTRING},
-    Data::Xml::Dom::{XmlDocument, XmlElement},
-    Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED},
-    UI::Notifications::{
-        NotificationSetting, ToastNotification, ToastNotificationManager, ToastTemplateType,
-    },
+use windows::core::{Interface, Result, HSTRING};
+use windows::Data::Xml::Dom::{XmlDocument, XmlElement};
+use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
+use windows::UI::Notifications::{
+    NotificationSetting, ToastNotification, ToastNotificationManager, ToastTemplateType,
 };
-use windows::UI::Notifications::ToastNotificationMode;
+use windows::UI::Notifications::{ToastNotificationMode, ToastNotifier};
 
-pub fn notify(
+pub fn show_notification(
     app: &AppHandle,
     title: &str,
     body: &str,
@@ -21,7 +20,6 @@ pub fn notify(
     }
 
     let xml = ToastNotificationManager::GetTemplateContent(ToastTemplateType::ToastImageAndText02)?;
-
     set_text(&xml, title, body)?;
 
     if let Some(icon_src) = icon_src {
@@ -33,11 +31,39 @@ pub fn notify(
     }
 
     let app_id = app.config().identifier.clone();
-
-    let toast = ToastNotification::CreateToastNotification(&xml)?;
     let notifier = ToastNotificationManager::CreateToastNotifierWithId(&app_id.into())?;
+    let toast = ToastNotification::CreateToastNotification(&xml)?;
 
     notifier.Show(&toast)?;
+
+    hide_toast_after(
+        notifier.clone(),
+        toast.clone(),
+        Duration::from_secs(8),
+    );
+
+    Ok(())
+}
+
+pub fn show_notification_sound_preview(app: &AppHandle) -> Result<()> {
+    unsafe {
+        let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
+    }
+
+    let xml = ToastNotificationManager::GetTemplateContent(ToastTemplateType::ToastText02)?;
+    set_text(&xml, "", "The notification sound looks like this")?;
+
+    let app_id = app.config().identifier.clone();
+    let notifier = ToastNotificationManager::CreateToastNotifierWithId(&app_id.into())?;
+    let toast = ToastNotification::CreateToastNotification(&xml)?;
+
+    notifier.Show(&toast)?;
+
+    hide_toast_after(
+        notifier.clone(),
+        toast.clone(),
+        Duration::from_secs(1),
+    );
 
     Ok(())
 }
@@ -86,4 +112,16 @@ fn set_silent(xml: &XmlDocument) -> Result<()> {
 
     toast.AppendChild(&audio)?;
     Ok(())
+}
+
+fn hide_toast_after(notifier: ToastNotifier, toast: ToastNotification, delay: Duration) {
+    tokio::spawn(async move {
+        unsafe {
+            let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
+        }
+
+        tokio::time::sleep(delay).await;
+
+        let _ = notifier.Hide(&toast);
+    });
 }

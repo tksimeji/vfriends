@@ -108,6 +108,7 @@ const en = {
       currentLabel: 'Current: {value}',
       currentCustom: 'Custom',
       currentGlobal: 'Global',
+      previewSound: 'Preview Sound',
     },
   },
   status: {

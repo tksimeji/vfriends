@@ -63,6 +63,6 @@ pub async fn notify_friend_online(app: &AppHandle, event: FriendOnlineEvent) -> 
         }
     }
 
-    windows_os::notify(app, title, &body, icon_src, should_play_override_sound)
+    windows_os::show_notification(app, title, &body, icon_src, should_play_override_sound)
         .map_err(|err| err.to_string())
 }

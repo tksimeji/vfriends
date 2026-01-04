@@ -75,7 +75,7 @@ pub fn set_friend_settings(
             entry.use_override = use_override;
         }
         if let Some(message_override) = patch.message_override {
-            entry.message_override = Some(message_override.trim().to_string());
+            entry.message_override = normalize_optional(message_override);
         }
         if let Some(sound_override) = patch.sound_override {
             entry.sound_override = normalize_optional(sound_override);

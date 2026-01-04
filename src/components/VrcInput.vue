@@ -49,7 +49,7 @@ const togglePassword = () => {
 
 <template>
   <div class="space-y-1">
-    <label v-if="props.label" class="block text-vrc-subtext text-xs">
+    <label v-if="props.label" class="block font-semibold text-md text-vrc-text">
       {{ props.label }}
     </label>
     <div :class="[containerClasses, attrs.class]" :style="attrs.style">
