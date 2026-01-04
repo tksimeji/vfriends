@@ -1,12 +1,14 @@
 use crate::config::SettingsStore;
 use crate::notifier::aumid::ensure_app_user_model_id;
-use crate::notifier::windows_os::notify;
+use crate::notifier::{custom_sounds, windows_os};
 use crate::vrchat_utils::AppResult;
 use crate::websocket::FriendOnlineEvent;
 use crate::{auth, vrchat_utils};
+use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
 pub async fn notify_friend_online(app: &AppHandle, event: FriendOnlineEvent) -> AppResult<()> {
+    println!("PLATFORM = {}", event.platform);
     if event.platform == "web" {
         return Ok(());
     }
@@ -46,5 +48,21 @@ pub async fn notify_friend_online(app: &AppHandle, event: FriendOnlineEvent) -> 
         None => None,
     };
 
-    notify(app, title, &body, icon_src).map_err(|err| err.to_string())
+    let silent_mode = windows_os::is_silent_mode(&app).unwrap_or(false);
+    let should_play_override_sound = !silent_mode
+        && friend_settings
+            .as_ref()
+            .is_some_and(|s| s.use_override && s.sound_override.is_some());
+
+    if should_play_override_sound {
+        if let Some(sound_path) = friend_settings
+            .as_ref()
+            .and_then(|s| s.sound_override.as_deref())
+        {
+            custom_sounds::play_custom_sound(PathBuf::from(sound_path));
+        }
+    }
+
+    windows_os::notify(app, title, &body, icon_src, should_play_override_sound)
+        .map_err(|err| err.to_string())
 }

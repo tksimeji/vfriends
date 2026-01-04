@@ -1,12 +1,21 @@
 use tauri::AppHandle;
-use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 use windows::{
     core::{Interface, Result, HSTRING},
     Data::Xml::Dom::{XmlDocument, XmlElement},
-    UI::Notifications::{ToastNotification, ToastNotificationManager, ToastTemplateType},
+    Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED},
+    UI::Notifications::{
+        NotificationSetting, ToastNotification, ToastNotificationManager, ToastTemplateType,
+    },
 };
+use windows::UI::Notifications::ToastNotificationMode;
 
-pub fn notify(app: &AppHandle, title: &str, body: &str, icon_src: Option<String>) -> Result<()> {
+pub fn notify(
+    app: &AppHandle,
+    title: &str,
+    body: &str,
+    icon_src: Option<String>,
+    silent: bool,
+) -> Result<()> {
     unsafe {
         let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
     }
@@ -14,8 +23,13 @@ pub fn notify(app: &AppHandle, title: &str, body: &str, icon_src: Option<String>
     let xml = ToastNotificationManager::GetTemplateContent(ToastTemplateType::ToastImageAndText02)?;
 
     set_text(&xml, title, body)?;
+
     if let Some(icon_src) = icon_src {
         set_circle_circle(&xml, &icon_src)?;
+    }
+
+    if silent {
+        set_silent(&xml)?;
     }
 
     let app_id = app.config().identifier.clone();
@@ -26,6 +40,21 @@ pub fn notify(app: &AppHandle, title: &str, body: &str, icon_src: Option<String>
     notifier.Show(&toast)?;
 
     Ok(())
+}
+
+pub fn is_silent_mode(app: &AppHandle) -> Result<bool> {
+    let do_not_disturb = matches!(
+        ToastNotificationManager::GetDefault()?.NotificationMode(),
+        Ok(mode) if mode != ToastNotificationMode::Unrestricted
+    );
+
+    if do_not_disturb {
+        return Ok(true);
+    }
+
+    let app_id = app.config().identifier.clone();
+    let notifier = ToastNotificationManager::CreateToastNotifierWithId(&app_id.into())?;
+    Ok(!matches!(notifier.Setting()?, NotificationSetting::Enabled))
 }
 
 fn set_text(xml: &XmlDocument, title: &str, body: &str) -> Result<()> {
@@ -45,5 +74,16 @@ fn set_circle_circle(xml: &XmlDocument, src: &str) -> Result<()> {
     element.SetAttribute(&HSTRING::from("hint-crop"), &HSTRING::from("circle"))?;
     element.SetAttribute(&HSTRING::from("alt"), &HSTRING::from("Profile Icon"))?;
 
+    Ok(())
+}
+
+fn set_silent(xml: &XmlDocument) -> Result<()> {
+    let toast_nodes = xml.GetElementsByTagName(&HSTRING::from("toast"))?;
+    let toast = toast_nodes.Item(0)?;
+
+    let audio = xml.CreateElement(&HSTRING::from("audio"))?;
+    audio.SetAttribute(&HSTRING::from("silent"), &HSTRING::from("true"))?;
+
+    toast.AppendChild(&audio)?;
     Ok(())
 }
