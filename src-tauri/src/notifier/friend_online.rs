@@ -7,6 +7,10 @@ use crate::{auth, vrchat_utils};
 use tauri::{AppHandle, Manager};
 
 pub async fn notify_friend_online(app: &AppHandle, event: FriendOnlineEvent) -> AppResult<()> {
+    if event.platform == "web" {
+        return Ok(());
+    }
+
     ensure_app_user_model_id(&app)?;
 
     let app_settings = app.state::<SettingsStore>().snapshot();
