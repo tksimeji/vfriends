@@ -1,25 +1,25 @@
 <script setup lang="ts">
 import {computed} from 'vue';
+import {useI18n} from 'vue-i18n';
 import UserAvatar from '../../components/UserAvatar.vue';
 import VrcButton from '../../components/VrcButton.vue';
 import VrcFilePicker from '../../components/VrcFilePicker.vue';
 import VrcInput from '../../components/VrcInput.vue';
 import VrcSelect from '../../components/VrcSelect.vue';
+import {type LocaleKey, setLocale} from '../../i18n';
 import type {VRChat} from '../../vrchat.ts';
 import SettingsCard from './SettingsCard.vue';
-import {useI18n} from 'vue-i18n';
-import {setLocale, type LocaleKey} from '../../i18n';
 
 const props = defineProps<{
   authedUser: VRChat.CurrentUser | null;
-  messageTemplate: string;
+  defaultMessage: string;
   previewText: string;
   soundLabel: string;
   errorMessage: string | null;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:messageTemplate', value: string): void;
+  (e: 'update:defaultMessage', value: string): void;
   (e: 'clear-sound'): void;
   (e: 'logout'): void;
   (e: 'preview-sound'): void;
@@ -33,8 +33,32 @@ const languageOptions = computed(() => [
   {value: 'en', label: t('settings.languageOptions.en')},
 ]);
 
+const displayName = computed(() =>
+    props.authedUser?.displayName ?? t('common.vrchatUser'),
+);
+
+const username = computed(() => props.authedUser?.username ?? '');
+
+const showUsername = computed(() => Boolean(props.authedUser?.username));
+
 const handleLanguageChange = (value: string) => {
   setLocale(value as LocaleKey);
+};
+
+const handleMessageInput = (event: Event) => {
+  emit('update:defaultMessage', (event.target as HTMLInputElement).value);
+};
+
+const handleSelectSound = (file: File | null) => {
+  emit('select-sound', file);
+};
+
+const handleClearSound = () => {
+  emit('clear-sound');
+};
+
+const handlePreviewSound = () => {
+  emit('preview-sound');
 };
 </script>
 
@@ -49,9 +73,9 @@ const handleLanguageChange = (value: string) => {
             fallback-class="font-semibold text-[12px]"
         />
         <div class="flex flex-col items-center text-vrc-text">
-          <p class="font-bold text-2xl">{{ authedUser?.displayName ?? t('common.vrchatUser') }}</p>
-          <p v-if="authedUser?.username" class="text-sm text-vrc-text/60">
-            {{ authedUser.username }}
+          <p class="font-bold text-2xl">{{ displayName }}</p>
+          <p v-if="showUsername" class="text-sm text-vrc-text/60">
+            {{ username }}
           </p>
         </div>
       </div>
@@ -83,9 +107,9 @@ const handleLanguageChange = (value: string) => {
 
       <VrcInput
           :label="t('settings.notificationMessageLabel')"
-          :value="messageTemplate"
+          :value="defaultMessage"
           :placeholder="t('settings.notificationMessagePlaceholder')"
-          @input="emit('update:messageTemplate', ($event.target as HTMLInputElement).value)"
+          @input="handleMessageInput"
       />
       <p class="text-vrc-text/70 text-xs">{{ t('common.preview', {text: previewText}) }}</p>
 
@@ -95,11 +119,11 @@ const handleLanguageChange = (value: string) => {
           :helper="t('settings.notificationSoundHelper')"
           :clearable="true"
           accept=".mp3,.wav,.ogg,.flac,.m4a,audio/*"
-          @select="(file) => emit('select-sound', file)"
-          @clear="emit('clear-sound')"
+          @select="handleSelectSound"
+          @clear="handleClearSound"
       />
       <div class="flex flex-wrap gap-2">
-        <VrcButton size="sm" @click="emit('preview-sound')">{{ t('common.testSound') }}</VrcButton>
+        <VrcButton size="sm" @click="handlePreviewSound">{{ t('common.testSound') }}</VrcButton>
       </div>
       <div class="flex gap-3 items-center">
         <span v-if="errorMessage" class="text-red-300 text-xs">{{ errorMessage }}</span>

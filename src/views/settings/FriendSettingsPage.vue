@@ -1,123 +1,138 @@
 <script setup lang="ts">
 import {computed, onMounted, ref, watch} from 'vue';
+import {useI18n} from 'vue-i18n';
 import StatusBadge from '../../components/StatusBadge.vue';
 import UserAvatar from '../../components/UserAvatar.vue';
 import VrcButton from '../../components/VrcButton.vue';
 import VrcFilePicker from '../../components/VrcFilePicker.vue';
 import VrcInput from '../../components/VrcInput.vue';
 import VrcToggle from '../../components/VrcToggle.vue';
-import {useNotificationPreferences} from '../../composables/notifications/useNotificationPreferences';
 import {useDominantColor} from '../../composables/useDominantColor';
-import {previewNotificationSound} from '../../data/notifications';
+import {fetchFriendSettings, previewNotificationSound, setFriendSettings} from '../../invokes';
+import {FriendSettings} from '../../types.ts';
 import {resolveSoundPath, soundLabel} from '../../utils/notificationSound';
 import {VRChat} from '../../vrchat.ts';
 import SettingsCard from './SettingsCard.vue';
 import SettingsRow from './SettingsRow.vue';
 import type {FriendSettingsContext} from './types';
-import {useI18n} from 'vue-i18n';
 
 const props = defineProps<{
   friend: VRChat.LimitedUserFriend;
   context: FriendSettingsContext;
 }>();
 
-const {
-  load,
-  isEnabled,
-  preferenceFor,
-  setEnabled,
-  setPreference,
-} = useNotificationPreferences();
+const emit = defineEmits<{
+  (e: 'updated'): void;
+}>();
+
 const {t} = useI18n();
 
+const settings = ref<FriendSettings | null>(null);
+
+const loadSettings = async () => {
+  const map = await fetchFriendSettings();
+  settings.value = map?.[props.friend.id] ?? null;
+};
+
 onMounted(() => {
-  void load();
+  void loadSettings();
 });
+
+watch(
+    () => props.friend.id,
+    () => {
+      void loadSettings();
+    },
+);
 
 const friendSource = computed(() => props.friend);
 const {overlayStyle} = useDominantColor(friendSource);
 
-const preference = computed(() => preferenceFor(props.friend.id));
-const notificationsEnabled = computed(() => isEnabled(props.friend.id));
-const customizeEnabled = computed(() => preference.value?.useCustom ?? false);
+const notificationsEnabled = computed(() => settings.value?.enabled !== false);
+const customizeEnabled = computed(() => settings.value?.useOverride ?? false);
 const canCustomize = computed(
-  () => notificationsEnabled.value && customizeEnabled.value,
+    () => notificationsEnabled.value && customizeEnabled.value,
 );
 
-const messageInput = ref('');
-const soundInput = ref('');
+const messageDraft = ref('');
+const soundDraft = ref('');
 
 watch(
-  preference,
-  (next) => {
-    messageInput.value = next?.messageTemplate ?? '';
-    soundInput.value = next?.sound ?? '';
-  },
-  {immediate: true},
+    () => settings.value,
+    (next) => {
+      messageDraft.value = next?.messageOverride ?? '';
+      soundDraft.value = next?.soundOverride ?? '';
+    },
+    {immediate: true},
 );
 
 const messageOverridden = computed(() => {
   if (!customizeEnabled.value) return false;
-  return preference.value?.messageTemplate !== undefined &&
-    preference.value?.messageTemplate !== null;
+  return settings.value?.messageOverride !== undefined &&
+      settings.value?.messageOverride !== null;
 });
 
 const soundOverridden = computed(() => {
   if (!customizeEnabled.value) return false;
-  return preference.value?.sound !== undefined &&
-    preference.value?.sound !== null;
+  return settings.value?.soundOverride !== undefined &&
+      settings.value?.soundOverride !== null;
 });
 
 const displayedSoundLabel = computed(() =>
-  soundLabel(soundInput.value || props.context.globalSound),
+    soundLabel(soundDraft.value || props.context.globalSound),
 );
+const currentLabel = (overridden: boolean) =>
+    t('settings.friend.currentLabel', {
+      value: t(
+          overridden
+              ? 'settings.friend.currentCustom'
+              : 'settings.friend.currentGlobal',
+      ),
+    });
+
 const currentMessageLabel = computed(() =>
-  t('settings.friend.currentLabel', {
-    value: t(
-      messageOverridden.value
-        ? 'settings.friend.currentCustom'
-        : 'settings.friend.currentGlobal',
-    ),
-  }),
+    currentLabel(messageOverridden.value),
 );
 const currentSoundLabel = computed(() =>
-  t('settings.friend.currentLabel', {
-    value: t(
-      soundOverridden.value
-        ? 'settings.friend.currentCustom'
-        : 'settings.friend.currentGlobal',
-    ),
-  }),
+    currentLabel(soundOverridden.value),
 );
-const updatePreference = (patch: Parameters<typeof setPreference>[1]) =>
-  setPreference(props.friend.id, patch);
+
+const patchSettings = async (patch: Partial<FriendSettings>) => {
+  await setFriendSettings(props.friend.id, patch);
+  await loadSettings();
+  emit('updated');
+};
 
 const handleToggleNotifications = (value: boolean) => {
-  void setEnabled(props.friend.id, value);
+  void patchSettings({enabled: value});
 };
 
 const handleToggleCustomize = (value: boolean) => {
-  void updatePreference({useCustom: value});
+  void patchSettings({useOverride: value});
+};
+
+const handleMessageInput = (event: Event) => {
+  messageDraft.value = (event.target as HTMLInputElement).value;
 };
 
 const commitMessage = () => {
-  void updatePreference({messageTemplate: messageInput.value});
+  void patchSettings({messageOverride: messageDraft.value});
 };
 
-const selectSound = async (file: File | null) => {
+const handleSelectSound = async (file: File | null) => {
   const path = await resolveSoundPath(file);
   if (!path) return;
-  soundInput.value = path;
-  await updatePreference({sound: path});
+  soundDraft.value = path;
+  await patchSettings({soundOverride: path});
 };
 
-const clearSound = () => {
-  soundInput.value = '';
-  void updatePreference({sound: ''});
+const handleClearSound = () => {
+  soundDraft.value = '';
+  void patchSettings({soundOverride: ''});
 };
 
-const previewSound = async () => {
-  const value = soundInput.value.trim() || props.context.globalSound;
+const handlePreviewSound = async () => {
+  const value = soundDraft.value.trim() || props.context.globalSound;
   await previewNotificationSound(value ? value : null);
 };
 </script>
@@ -143,7 +158,9 @@ const previewSound = async () => {
           <template #description>
             <p class="text-sm text-vrc-text">
               {{
-                notificationsEnabled ? t('settings.friend.deliveryOn') : t('settings.friend.deliveryOff')
+                notificationsEnabled
+                    ? t('settings.friend.deliveryOn')
+                    : t('settings.friend.deliveryOff')
               }}
             </p>
           </template>
@@ -162,7 +179,9 @@ const previewSound = async () => {
             <div class="space-y-1">
               <p class="text-sm text-vrc-text/70">
                 {{
-                  customizeEnabled ? t('settings.friend.customizeOn') : t('settings.friend.customizeOff')
+                  customizeEnabled
+                      ? t('settings.friend.customizeOn')
+                      : t('settings.friend.customizeOff')
                 }}
               </p>
             </div>
@@ -179,11 +198,11 @@ const previewSound = async () => {
         <div :class="canCustomize ? '' : 'opacity-50'">
           <VrcInput
               :label="t('settings.friend.messageLabel')"
-              :value="messageInput"
+              :value="messageDraft"
               :disabled="!canCustomize"
               :placeholder="props.context.globalMessageTemplate"
               @blur="commitMessage"
-              @input="messageInput = ($event.target as HTMLInputElement).value"
+              @input="handleMessageInput"
           />
           <p class="mt-1 text-vrc-text/70 text-xs">{{ t('settings.friend.messageHelp') }}</p>
           <p class="text-[10px] text-vrc-text/60">
@@ -197,8 +216,8 @@ const previewSound = async () => {
               :disabled="!canCustomize"
               :clearable="true"
               accept=".mp3,.wav,.ogg,.flac,.m4a,audio/*"
-              @select="selectSound"
-              @clear="clearSound"
+              @select="handleSelectSound"
+              @clear="handleClearSound"
           />
           <p class="text-[10px] text-vrc-text/60">
             {{ currentSoundLabel }}
@@ -207,7 +226,7 @@ const previewSound = async () => {
             <VrcButton
                 size="sm"
                 :disabled="!canCustomize"
-                @click="previewSound"
+                @click="handlePreviewSound"
             >
               {{ t('common.testSound') }}
             </VrcButton>

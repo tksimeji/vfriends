@@ -1,14 +1,17 @@
-use crate::authv2::state::AuthState;
-use crate::settings::{
-    FriendNotification, FriendNotificationPatch, FriendSettings, NotificationConfig, SettingsStore,
-};
-use crate::utils::{fetch_all_friends, AppResult};
+use crate::auth::AuthState;
+use crate::config::{AppSettings, FriendSettings, SettingsStore};
+use crate::vrchat_utils::AppResult;
+use crate::{auth, notifier, vrchat_utils};
+use std::collections::HashMap;
 use tauri::{AppHandle, Manager, State};
 use vrchatapi::models::{CurrentUser, LimitedUserFriend};
+use serde::Deserialize;
 
 #[tauri::command]
-pub async fn fetch_friends(state: State<'_, AuthState>) -> AppResult<Vec<LimitedUserFriend>> {
-    fetch_all_friends(state.inner()).await
+pub async fn fetch_friends(
+    state: State<'_, AuthState>,
+) -> AppResult<Vec<LimitedUserFriend>> {
+    vrchat_utils::fetch_all_friends(state.inner()).await
 }
 
 #[tauri::command]
@@ -18,7 +21,7 @@ pub async fn begin_auth(
     username: String,
     password: String,
 ) -> AppResult<()> {
-    state.inner().begin_auth(&app, username, password).await
+    state.inner().begin_auth_flow(&app, username, password).await
 }
 
 #[tauri::command]
@@ -46,23 +49,18 @@ pub fn logout(app: AppHandle, state: State<'_, AuthState>) -> AppResult<()> {
 }
 
 #[tauri::command]
-pub fn fetch_notification_preferences(
+pub fn fetch_friend_settings(
     state: State<'_, SettingsStore>,
-) -> AppResult<std::collections::HashMap<String, FriendNotification>> {
-    let settings = state.snapshot();
-    let mapped = settings
-        .friend_settings
-        .iter()
-        .map(|(id, prefs)| (id.clone(), to_friend_notification(prefs)))
-        .collect();
-    Ok(mapped)
+) -> AppResult<HashMap<String, FriendSettings>> {
+    let app_settings = state.snapshot();
+    Ok(app_settings.friend_settings)
 }
 
 #[tauri::command]
-pub fn set_notification_preference(
+pub fn set_friend_settings(
     state: State<'_, SettingsStore>,
     friend_id: String,
-    patch: FriendNotificationPatch,
+    patch: FriendSettingsPatch,
 ) -> AppResult<()> {
     state.consume(|settings| {
         let entry = settings
@@ -73,57 +71,57 @@ pub fn set_notification_preference(
         if let Some(enabled) = patch.enabled {
             entry.enabled = enabled;
         }
-        if let Some(use_custom) = patch.use_custom {
-            entry.use_override = use_custom;
+        if let Some(use_override) = patch.use_override {
+            entry.use_override = use_override;
         }
-        if let Some(message_template) = patch.message_template {
-            entry.message_override = Some(message_template.trim().to_string());
+        if let Some(message_override) = patch.message_override {
+            entry.message_override = Some(message_override.trim().to_string());
         }
-        if let Some(sound) = patch.sound {
-            entry.sound_override = normalize_optional(sound);
+        if let Some(sound_override) = patch.sound_override {
+            entry.sound_override = normalize_optional(sound_override);
         }
     });
     Ok(())
 }
 
 #[tauri::command]
-pub fn fetch_notification_settings(
+pub fn fetch_app_settings(
     state: State<'_, SettingsStore>,
-) -> AppResult<NotificationConfig> {
-    let settings = state.snapshot();
-    Ok(NotificationConfig {
-        message_template: settings.default_message,
-        sound: settings.default_sound,
-    })
+) -> AppResult<AppSettings> {
+    Ok(state.snapshot())
 }
 
 #[tauri::command]
-pub fn set_notification_settings(
+pub fn set_app_settings(
     state: State<'_, SettingsStore>,
-    settings: NotificationConfig,
+    settings: AppSettingsPatch,
 ) -> AppResult<()> {
     state.consume(|current| {
-        current.default_message = settings.message_template;
-        current.default_sound = normalize_optional(settings.sound.unwrap_or_default());
+        if let Some(default_message) = settings.default_message {
+            current.default_message = default_message;
+        }
+        if let Some(default_sound) = settings.default_sound {
+            current.default_sound = normalize_optional(default_sound);
+        }
     });
     Ok(())
 }
 
 #[tauri::command]
 pub async fn preview_notification_sound(app: AppHandle, sound: Option<String>) -> AppResult<()> {
-    crate::notifier::preview_sound(&app, sound).await;
+    notifier::preview_sound(&app, sound).await;
     Ok(())
 }
 
 #[tauri::command]
 pub fn save_notification_sound(app: AppHandle, name: String, bytes: Vec<u8>) -> AppResult<String> {
-    let path = crate::notifier::sound::store_sound_file(&app, &name, &bytes)?;
+    let path = notifier::store_custom_sound(&app, &name, &bytes)?;
     Ok(path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
-pub async fn fetch_cached_image_data(
-    state: State<'_, AuthState>,
+pub async fn fetch_icon_data_uri(
+    state: State<'_, auth::AuthState>,
     url: String,
 ) -> AppResult<Option<String>> {
     let (client, user_agent) = state.with_session(|session| {
@@ -137,18 +135,24 @@ pub async fn fetch_cached_image_data(
         )
     })?;
 
-    let data =
-        crate::notifier::fetch_cached_image_data_with_client(url, &client, &user_agent).await;
+    let data = vrchat_utils::fetch_user_icon_data_uri(&url, &client, &user_agent).await;
     Ok(data)
 }
 
-fn to_friend_notification(settings: &FriendSettings) -> FriendNotification {
-    FriendNotification {
-        enabled: settings.enabled,
-        use_custom: settings.use_override,
-        message_template: settings.message_override.clone(),
-        sound: settings.sound_override.clone(),
-    }
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FriendSettingsPatch {
+    pub enabled: Option<bool>,
+    pub use_override: Option<bool>,
+    pub message_override: Option<String>,
+    pub sound_override: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppSettingsPatch {
+    pub default_message: Option<String>,
+    pub default_sound: Option<String>,
 }
 
 fn normalize_optional(value: String) -> Option<String> {

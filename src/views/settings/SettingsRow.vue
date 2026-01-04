@@ -1,4 +1,9 @@
-<script setup/>
+<script setup lang="ts">
+defineSlots<{
+  description: () => any;
+  control: () => any;
+}>();
+</script>
 
 <template>
   <div class="flex gap-3 items-start justify-between">

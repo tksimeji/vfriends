@@ -20,7 +20,6 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-opener = "2"
-tauri-plugin-notification = "2"
 tauri-plugin-autostart = "2.5.1"
 tauri-plugin-frame = { git = "https://github.com/clarifei/tauri-plugin-frame", branch = "main" }
 serde = { version = "1", features = ["derive"] }
@@ -34,17 +33,13 @@ rodio = "0.20"
 base64 = "0.22"
 mime_guess = "2.0"
 windows = { version = "0.62.2", features = ["Data", "Data_Xml", "Data_Xml_Dom", "UI", "UI_Notifications", "Win32_Foundation", "Win32_System_Com"] }
+log = "0.4.29"
+env_logger = "0.11.8"
+cookie = "0.18.1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 keyring = { version = "3", features = ["windows-native"] }
 windows-registry = "0.6"
-tauri-winrt-notification = "0.7"
-
-[target.'cfg(target_os = "macos")'.dependencies]
-keyring = { version = "3", features = ["apple-native"] }
-
-[target.'cfg(target_os = "linux")'.dependencies]
-keyring = { version = "3", features = ["linux-native"] }
 
 [patch.crates-io]
 enigo = { path = "vendor/enigo" }

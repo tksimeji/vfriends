@@ -1,12 +1,12 @@
 use std::collections::HashSet;
 
-use crate::authv2::state::AuthState;
-use crate::utils::AppResult;
+use crate::vrchat_utils::AppResult;
 use vrchatapi::apis::configuration::Configuration;
 use vrchatapi::apis::friends_api;
 use vrchatapi::models;
+use crate::auth;
 
-pub async fn fetch_all_friends(state: &AuthState) -> AppResult<Vec<models::LimitedUserFriend>> {
+pub async fn fetch_all_friends(state: &auth::AuthState) -> AppResult<Vec<models::LimitedUserFriend>> {
     let config = state.with_session(|session| session.config.clone())?;
 
     let online_friends = fetch_friend_pages(&config, false).await?;

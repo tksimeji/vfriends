@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 
-const SETTINGS_FILE: &str = "settings.json";
+const FILE_NAME: &str = "AppSettings.json";
 
 pub struct SettingsStore {
     path: PathBuf,
@@ -38,31 +38,9 @@ impl SettingsStore {
         };
 
         if let Err(err) = write_settings(&self.path, &snapshot) {
-            eprintln!("Failed to save app settings: {err}");
+            log::warn!("Failed to save app config: {err}");
         }
     }
-
-    pub fn set(&self, settings: AppSettings) {
-        {
-            let mut guard = self
-                .state
-                .lock()
-                .unwrap_or_else(|poisoned| poisoned.into_inner());
-            *guard = settings.clone();
-        }
-
-        if let Err(err) = write_settings(&self.path, &settings) {
-            eprintln!("Failed to save app settings: {err}");
-        }
-    }
-}
-
-fn settings_path(app: &AppHandle) -> PathBuf {
-    let base = app
-        .path()
-        .app_data_dir()
-        .unwrap_or_else(|_| std::env::temp_dir().join("vfriends"));
-    base.join(SETTINGS_FILE)
 }
 
 fn read_settings(path: &Path) -> AppSettings {
@@ -80,4 +58,12 @@ fn write_settings(path: &Path, settings: &AppSettings) -> std::io::Result<()> {
 
     let json = serde_json::to_string_pretty(settings).unwrap_or_else(|_| "{}".to_string());
     std::fs::write(path, json)
+}
+
+fn settings_path(app: &AppHandle) -> PathBuf {
+    let base = app
+        .path()
+        .app_data_dir()
+        .unwrap_or_else(|_| std::env::temp_dir().join("vfriends"));
+    base.join(FILE_NAME)
 }

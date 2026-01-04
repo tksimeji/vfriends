@@ -14,7 +14,7 @@ const props = defineProps<{
   friends: VRChat.LimitedUserFriend[];
   selectedId: string;
   scrollTargetId?: string | null;
-  isNotificationEnabled: (friendId: string) => boolean;
+  isFriendEnabled: (friendId: string) => boolean;
 }>();
 
 const emit = defineEmits<{
@@ -154,7 +154,7 @@ onBeforeUnmount(() => {
 
             <div class="flex gap-2 ml-auto">
               <VolumeOffIcon
-                  v-if="!isNotificationEnabled(item.id)"
+                  v-if="!isFriendEnabled(item.id)"
                   class="text-red-600"
                   :size="14"
               />

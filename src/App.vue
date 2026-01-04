@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import {invoke} from '@tauri-apps/api/core';
 import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue';
 import TitleBar from './components/title/TitleBar.vue';
@@ -9,6 +8,7 @@ import FriendsView from './views/friends/FriendsView.vue';
 import type {VRChat} from './vrchat.ts';
 import 'vue-final-modal/style.css';
 import {useAuthSession} from './composables/useAuthSession';
+import {logout, restoreSession} from './invokes';
 
 const {currentUser: authedUser, isAuthenticated, setCurrentUser, clearCurrentUser} =
   useAuthSession();
@@ -67,7 +67,7 @@ const hoverOverlayStyle = computed(() => {
 
 const handleLogoutFromTitle = async () => {
   try {
-    await invoke('logout');
+    await logout();
   } catch (error) {
     console.error(error);
   } finally {
@@ -97,7 +97,7 @@ onMounted(async () => {
   });
 
   try {
-    const restored = await invoke<VRChat.CurrentUser | null>('restore_session');
+    const restored = await restoreSession();
     if (restored) {
       setCurrentUser(restored);
     }

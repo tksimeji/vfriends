@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {VolumeOffIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
-import {useNotificationPreferences} from '../../composables/notifications/useNotificationPreferences';
+import {fetchFriendSettings} from '../../invokes';
 import {useDominantColor} from '../../composables/useDominantColor';
 import StatusBadge from '../../components/StatusBadge.vue';
 import {VRChat} from '../../vrchat.ts';
@@ -16,10 +16,19 @@ const emit = defineEmits<{
   (e: 'hover', payload: { id: string; rgb: [number, number, number] | null; active: boolean }): void;
 }>();
 
-const {isEnabled, load} = useNotificationPreferences();
+const notificationsEnabled = ref(true);
+const refreshNotificationStatus = async () => {
+  try {
+    const map = await fetchFriendSettings();
+    notificationsEnabled.value = map?.[props.friend.id]?.enabled !== false;
+  } catch (error) {
+    console.error(error);
+    notificationsEnabled.value = true;
+  }
+};
 
 onMounted(() => {
-  void load();
+  void refreshNotificationStatus();
 });
 
 const isOffline = computed(() => VRChat.isOffline(props.friend));
@@ -34,7 +43,12 @@ const lastOnlineLabel = computed(() =>
   lastOnline.value ? t('friends.lastOnline', {value: lastOnline.value}) : '',
 );
 
-const notificationsEnabled = computed(() => isEnabled(props.friend.id));
+watch(
+  () => props.friend.id,
+  () => {
+    void refreshNotificationStatus();
+  },
+);
 
 const emitHover = (active: boolean) => {
   emit('hover', {id: props.friend.id, rgb: rgb.value, active});

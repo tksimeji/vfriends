@@ -1,9 +1,10 @@
 import {computed, ref} from 'vue';
-import {fetchFriends} from '../data/friends';
 import {t} from '../i18n';
+import {fetchFriends} from '../invokes.ts';
 import {VRChat} from '../vrchat.ts';
 
 const AUTO_REFRESH_MS = 30000;
+
 export const useFriends = () => {
   const entries = ref<VRChat.LimitedUserFriend[]>([]);
   const isLoading = ref(false);

@@ -19,7 +19,6 @@
     "core:window:allow-is-maximized",
     "frame:default",
     "opener:default",
-    "notification:default",
     "autostart:allow-enable",
     "autostart:allow-disable",
     "autostart:allow-is-enabled"

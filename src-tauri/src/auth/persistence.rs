@@ -63,7 +63,7 @@ impl AuthSession {
                     cookie_jar.set_cookies(&mut headers, &cookie_base_url);
                 }
                 Err(e) => {
-                    eprintln!("Failed to parse cookie header: {}", e);
+                    log::warn!("Failed to parse cookie header: {e}");
                 }
             }
         }
@@ -85,7 +85,7 @@ fn cookie_base_url(config: &Configuration) -> Url {
             url
         }
         Err(err) => {
-            eprintln!("Failed to parse base path for cookie URL: {err}");
+            log::warn!("Failed to parse base path for cookie URL: {err}");
             Url::parse("https://api.vrchat.cloud").expect("Invalid fallback cookie URL")
         }
     }
@@ -95,7 +95,7 @@ fn load_saved_cookie_header() -> Option<String> {
     let entry = match Entry::new(KEYCHAIN_SERVICE, KEYCHAIN_ACCOUNT) {
         Ok(entry) => entry,
         Err(err) => {
-            eprintln!("Failed to access keychain entry: {err}");
+            log::warn!("Failed to access keychain entry: {err}");
             return None;
         }
     };
@@ -111,7 +111,7 @@ fn load_saved_cookie_header() -> Option<String> {
         }
         Err(keyring::Error::NoEntry) => None,
         Err(err) => {
-            eprintln!("Failed to read auth cookies from keychain: {err}");
+            log::warn!("Failed to read auth cookies from keychain: {err}");
             None
         }
     }

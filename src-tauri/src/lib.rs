@@ -1,48 +1,29 @@
-mod authv2;
+mod auth;
 mod commands;
+mod config;
 mod notifier;
-mod pipeline;
 mod shell;
-mod utils;
-mod websockets;
-mod settings;
+mod vrchat_utils;
+mod websocket;
 
-use crate::authv2::state::AuthState;
-use crate::commands::{
-    begin_auth,
-    fetch_friends,
-    fetch_notification_preferences,
-    fetch_notification_settings,
-    fetch_cached_image_data,
-    preview_notification_sound,
-    save_notification_sound,
-    logout,
-    restore_session,
-    set_notification_preference,
-    set_notification_settings,
-    verify_two_factor,
-};
-use crate::pipeline::PipelineState;
-use crate::settings::SettingsStore;
+use crate::config::SettingsStore;
 use tauri::Manager;
-use tauri_plugin_frame::FramePluginBuilder;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        .manage(AuthState::new())
-        .manage(PipelineState::default())
+        .manage(auth::AuthState::new())
+        .manage(websocket::WebsocketState::default())
         .plugin(
-            FramePluginBuilder::new()
+            tauri_plugin_frame::FramePluginBuilder::new()
                 .titlebar_height(48)
                 .button_width(46)
                 .auto_titlebar(true)
                 .snap_overlay_delay_ms(10)
-                .close_hover_bg("rgba(140,24,24,0.8)")
+                .close_hover_bg("rgb(196, 43, 28)")
                 .button_hover_bg("rgba(106,227,249,0.12)")
                 .build(),
         )
-        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::Builder::new().args([shell::AUTOSTART_ARG]).build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -52,19 +33,19 @@ pub fn run() {
         })
         .on_window_event(shell::handle_window_event)
         .invoke_handler(tauri::generate_handler![
-            begin_auth,
-            verify_two_factor,
-            restore_session,
-            logout,
-            fetch_friends,
-            fetch_notification_preferences,
-            set_notification_preference,
-            fetch_notification_settings,
-            set_notification_settings,
-            preview_notification_sound,
-            save_notification_sound,
-            fetch_cached_image_data,
+            commands::begin_auth,
+            commands::verify_two_factor,
+            commands::restore_session,
+            commands::logout,
+            commands::fetch_friends,
+            commands::fetch_friend_settings,
+            commands::set_friend_settings,
+            commands::fetch_app_settings,
+            commands::set_app_settings,
+            commands::preview_notification_sound,
+            commands::save_notification_sound,
+            commands::fetch_icon_data_uri,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("Error while running tauri app.");
 }

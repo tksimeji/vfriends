@@ -1,16 +1,16 @@
 use tauri::AppHandle;
+use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 use windows::{
     core::{Interface, Result, HSTRING},
     Data::Xml::Dom::{XmlDocument, XmlElement},
     UI::Notifications::{ToastNotification, ToastNotificationManager, ToastTemplateType},
 };
-use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 
 pub fn notify(app: &AppHandle, title: &str, body: &str, icon_src: Option<String>) -> Result<()> {
-    println!("Toast notify: {}", icon_src.as_deref().unwrap_or("<no icon>"));
     unsafe {
         let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
     }
+
     let xml = ToastNotificationManager::GetTemplateContent(ToastTemplateType::ToastImageAndText02)?;
 
     set_text(&xml, title, body)?;

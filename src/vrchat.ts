@@ -1,7 +1,4 @@
 import {Temporal} from '@js-temporal/polyfill';
-import {Vibrant} from 'node-vibrant/browser';
-import type {Palette, Swatch} from '@vibrant/color';
-import {fetchCachedImageData} from './data/images';
 import {t} from './i18n';
 
 export namespace VRChat {
@@ -59,6 +56,8 @@ export namespace VRChat {
    */
   export type UserStatus = 'active' | 'ask me' | 'busy' | 'join me' | 'offline';
 
+  export type EitherFriendOrCurrent = LimitedUserFriend | CurrentUser;
+
   export const isOffline = (friend: LimitedUserFriend) => {
     const status = friend.status.toLowerCase();
     const location = friend.location.toLowerCase();
@@ -79,148 +78,33 @@ export namespace VRChat {
     user.currentAvatarImageUrl ||
     '';
 
-  export type UserSummary = LimitedUserFriend | CurrentUser;
-  export type RgbColor = [number, number, number];
-
-  const isFriend = (user: UserSummary): user is LimitedUserFriend =>
-    'isFriend' in user || 'friendKey' in user;
-
-  export const resolveAvatarUrl = (user: UserSummary) =>
-    isFriend(user) ? avatarUrl(user) : currentUserAvatarUrl(user);
+  export const resolveAvatarUrl = (user: EitherFriendOrCurrent) =>
+    'isFriend' in user || 'friendKey' in user
+      ? avatarUrl(user as LimitedUserFriend)
+      : currentUserAvatarUrl(user as CurrentUser);
 
   export const statusKey = (friend: LimitedUserFriend) =>
     isOffline(friend) ? 'offline' : friend.status.toLowerCase();
 
+  const STATUS_META: Record<
+    UserStatus | 'offline',
+    {labelKey: string; colorClass: string}
+  > = {
+    'join me': {labelKey: 'status.joinMe', colorClass: 'bg-vrc-join-me'},
+    active: {labelKey: 'status.active', colorClass: 'bg-vrc-online'},
+    'ask me': {labelKey: 'status.askMe', colorClass: 'bg-vrc-ask-me'},
+    busy: {labelKey: 'status.busy', colorClass: 'bg-vrc-do-not-disturb'},
+    offline: {labelKey: 'status.offline', colorClass: 'bg-black'},
+  };
+
   export const statusLabel = (statusKey: string) => {
-    switch (statusKey) {
-      case 'join me':
-        return t('status.joinMe');
-      case 'active':
-        return t('status.active');
-      case 'ask me':
-        return t('status.askMe');
-      case 'busy':
-        return t('status.busy');
-      default:
-        return t('status.offline');
-    }
+    const meta = STATUS_META[statusKey as UserStatus] ?? STATUS_META.offline;
+    return t(meta.labelKey);
   };
 
   export const statusColorClass = (statusKey: string) => {
-    switch (statusKey) {
-      case 'join me':
-        return 'bg-vrc-join-me';
-      case 'active':
-        return 'bg-vrc-online';
-      case 'ask me':
-        return 'bg-vrc-ask-me';
-      case 'busy':
-        return 'bg-vrc-do-not-disturb';
-      default:
-        return 'bg-black';
-    }
-  };
-
-  const BASE_RGB: RgbColor = [46, 50, 61];
-  const ACCENT_ALPHA = 0.28;
-  const BASE_ALPHA = 0.95;
-  const CARD_ALPHA = 0.18;
-
-  const swatchPreference: (keyof Palette)[] = [
-    'Vibrant',
-    'Muted',
-    'DarkVibrant',
-    'LightVibrant',
-    'DarkMuted',
-    'LightMuted',
-  ];
-
-  const isTauriRuntime =
-    typeof window !== 'undefined' && '__TAURI__' in (window as typeof window);
-
-  const colorCache = new Map<string, RgbColor | null>();
-  const inflight = new Map<string, Promise<RgbColor | null>>();
-  const sourceCache = new Map<string, string>();
-
-  const pickSwatch = (palette: Palette): Swatch | null => {
-    for (const key of swatchPreference) {
-      const swatch = palette[key];
-      if (swatch) return swatch;
-    }
-    return null;
-  };
-
-  const resolveImageSource = async (url: string) => {
-    if (sourceCache.has(url)) {
-      return sourceCache.get(url) ?? url;
-    }
-
-    let resolved = url;
-    if (isTauriRuntime) {
-      const dataUrl = await fetchCachedImageData(url);
-      if (dataUrl) {
-        resolved = dataUrl;
-      }
-    }
-
-    sourceCache.set(url, resolved);
-    return resolved;
-  };
-
-  export const clearDominantColorCache = (url?: string) => {
-    if (!url) {
-      colorCache.clear();
-      sourceCache.clear();
-      inflight.clear();
-      return;
-    }
-    colorCache.delete(url);
-    sourceCache.delete(url);
-    inflight.delete(url);
-  };
-
-  export const dominantColorForUrl = async (url: string) => {
-    if (!url) return null;
-    if (colorCache.has(url)) {
-      return colorCache.get(url) ?? null;
-    }
-    if (inflight.has(url)) {
-      return inflight.get(url) ?? null;
-    }
-
-    const task = (async () => {
-      try {
-        const source = await resolveImageSource(url);
-        const palette = await Vibrant.from(source).getPalette();
-        const swatch = pickSwatch(palette);
-        const rgb = swatch ? (swatch.rgb as RgbColor) : null;
-        colorCache.set(url, rgb);
-        return rgb;
-      } catch (error) {
-        console.warn('[dominantColor] Failed to extract color', error);
-        colorCache.set(url, null);
-        return null;
-      } finally {
-        inflight.delete(url);
-      }
-    })();
-
-    inflight.set(url, task);
-    return task;
-  };
-
-  export const dominantColorForUser = async (user: UserSummary) =>
-    dominantColorForUrl(resolveAvatarUrl(user));
-
-  export const cardOverlayStyle = (rgb: RgbColor | null) => {
-    if (!rgb) return {};
-    const [r, g, b] = rgb;
-    const accent = `rgba(${r}, ${g}, ${b}, ${ACCENT_ALPHA})`;
-    const base = `rgba(${BASE_RGB.join(', ')}, ${BASE_ALPHA})`;
-    return {
-      backgroundColor: `rgba(${r}, ${g}, ${b}, ${CARD_ALPHA})`,
-      backgroundImage: `linear-gradient(180deg, ${accent}, ${base})`,
-    };
+    const meta = STATUS_META[statusKey as UserStatus] ?? STATUS_META.offline;
+    return meta.colorClass;
   };
 
   const STATUS_PRIORITY: Record<UserStatus, number> = {
@@ -231,17 +115,16 @@ export namespace VRChat {
     offline: 4,
   };
 
-  const rankFriend = (friend: LimitedUserFriend) => {
-    if (isOffline(friend)) return Number.POSITIVE_INFINITY;
-    return STATUS_PRIORITY[friend.status] ?? Number.POSITIVE_INFINITY;
-  };
-
   export const compareFriends = (
     first: LimitedUserFriend,
     second: LimitedUserFriend,
   ) => {
-    const rankA = rankFriend(first);
-    const rankB = rankFriend(second);
+    const rankA = isOffline(first)
+      ? Number.POSITIVE_INFINITY
+      : STATUS_PRIORITY[first.status] ?? Number.POSITIVE_INFINITY;
+    const rankB = isOffline(second)
+      ? Number.POSITIVE_INFINITY
+      : STATUS_PRIORITY[second.status] ?? Number.POSITIVE_INFINITY;
     if (rankA !== rankB) return rankA - rankB;
     return first.displayName
       .toLowerCase()

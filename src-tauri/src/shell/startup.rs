@@ -1,9 +1,9 @@
 use super::tray::hide_main_window;
 use super::AUTOSTART_ARG;
-use crate::authv2::state::AuthState;
 use tauri::{AppHandle, Manager};
 
 use tauri_plugin_autostart::ManagerExt as AutostartManagerExt;
+use crate::auth;
 
 pub fn init(app: &AppHandle) -> tauri::Result<()> {
     if is_autostart() {
@@ -12,12 +12,12 @@ pub fn init(app: &AppHandle) -> tauri::Result<()> {
 
     let app_handle = app.clone();
     tauri::async_runtime::spawn(async move {
-        let state = app_handle.state::<AuthState>();
+        let state = app_handle.state::<auth::AuthState>();
         let _ = state.restore_session(&app_handle).await;
     });
 
     if let Err(err) = app.autolaunch().enable() {
-        eprintln!("Failed to enable autostart: {err}");
+        log::error!("Failed to enable autostart: {err}");
     }
 
     Ok(())

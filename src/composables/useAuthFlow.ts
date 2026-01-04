@@ -1,9 +1,9 @@
-import {invoke} from '@tauri-apps/api/core';
 import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {computed, onBeforeUnmount, onMounted, reactive, shallowRef, toRefs} from 'vue';
+import {t} from '../i18n';
 import {VRChat} from '../vrchat.ts';
 import {useAuthSession} from './useAuthSession';
-import {t} from '../i18n';
+import {beginAuth, restoreSession, verifyTwoFactor} from '../invokes';
 
 export type UseLoginFlowOptions = {
   onLoginSuccess?: (user: VRChat.CurrentUser | null) => void;
@@ -35,6 +35,7 @@ type AuthEvent =
   | { type: 'loggedOut' };
 
 const KNOWN_2FA_METHODS: TwoFactorMethod[] = ['totp', 'emailOtp', 'otp'];
+
 const methodSort = (a: TwoFactorMethod, b: TwoFactorMethod) =>
   KNOWN_2FA_METHODS.indexOf(a) - KNOWN_2FA_METHODS.indexOf(b);
 
@@ -45,23 +46,22 @@ const normalizeMethods = (methods: string[] | undefined) => {
   return Array.from(new Set(filtered)).sort(methodSort);
 };
 
-const createInitialState = (): AuthState => ({
-  username: '',
-  password: '',
-  twoFactorCode: '',
-  twoFactorMethods: [],
-  selectedTwoFactorMethod: '',
-  isSubmitting: false,
-  errorMessage: '',
-  successMessage: '',
-  authedUser: null,
-  currentStep: 'credentials',
-  activeAction: null,
-});
-
 export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
   const {setCurrentUser, clearCurrentUser} = useAuthSession();
-  const state = reactive<AuthState>(createInitialState());
+  const state = reactive<AuthState>({
+    username: '',
+    password: '',
+    twoFactorCode: '',
+    twoFactorMethods: [],
+    selectedTwoFactorMethod: '',
+    isSubmitting: false,
+    errorMessage: '',
+    successMessage: '',
+    authedUser: null,
+    currentStep: 'credentials',
+    activeAction: null,
+  });
+
   const unlistenRef = shallowRef<UnlistenFn | null>(null);
 
   const resetTwoFactor = () => {
@@ -166,10 +166,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
 
     markSubmitting('credentials');
     try {
-      await invoke('begin_auth', {
-        username: trimmedUsername,
-        password: state.password,
-      });
+      await beginAuth(trimmedUsername, state.password);
     } catch (error) {
       markIdle();
       state.errorMessage = t('auth.errors.loginFailedNetwork');
@@ -193,10 +190,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
 
     markSubmitting('twoFactor');
     try {
-      await invoke('verify_two_factor', {
-        twoFactorCode: state.twoFactorCode.trim(),
-        twoFactorMethod: method,
-      });
+      await verifyTwoFactor(state.twoFactorCode.trim(), method);
     } catch (error) {
       markIdle();
       state.errorMessage = t('auth.errors.verifyFailed');
@@ -225,7 +219,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
       handleAuthEvent(event.payload);
     });
     try {
-      await invoke('restore_session');
+      await restoreSession();
     } catch (error) {
       console.error(error);
     }

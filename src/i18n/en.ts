@@ -1,6 +1,6 @@
 const en = {
   common: {
-    appSettings: 'App settings',
+    appSettings: 'App config',
     clear: 'Clear',
     close: 'Close',
     default: 'Default',
@@ -61,7 +61,7 @@ const en = {
     searchEmpty: 'No results found.',
     count: '{count} friends',
     countFiltered: '{filtered} / {total} friends',
-    clickCardHint: 'Click a card to open notification settings',
+    clickCardHint: 'Click a card to open notification config',
     updating: 'Updating...',
     searchPlaceholder: 'Search friends...',
     searchPlaceholderTitlebar: 'Search friends here',
@@ -70,13 +70,13 @@ const en = {
   notifications: {
     defaultMessageTemplate: '{name} is online',
     errors: {
-      loadFailed: 'Failed to load notification settings.',
-      saveFailed: 'Failed to save notification settings.',
+      loadFailed: 'Failed to load notification config.',
+      saveFailed: 'Failed to save notification config.',
     },
   },
   settings: {
-    noSettings: 'No settings available.',
-    accountTitle: 'Account settings',
+    noSettings: 'No config available.',
+    accountTitle: 'Account config',
     languageTitle: 'Language',
     languageLabel: 'App language',
     languageHelper: 'Applies immediately. Restart not required.',
@@ -84,9 +84,9 @@ const en = {
       en: 'English',
       ja: 'Japanese',
     },
-    notificationsTitle: 'Notification settings',
+    notificationsTitle: 'Notification config',
     notificationsDescription:
-      'These settings apply when no per-friend override exists.',
+      'These config apply when no per-friend override exists.',
     notificationMessageLabel: 'Notification message',
     notificationMessagePlaceholder: '{name} is online',
     notificationSoundLabel: 'Notification sound (file)',
@@ -102,7 +102,7 @@ const en = {
       customizeOff:
         'Turn this on to customize notifier for this friend.',
       messageLabel: 'Notification message',
-      messageHelp: 'Empty uses global settings',
+      messageHelp: 'Empty uses global config',
       soundLabel: 'Notification sound',
       soundHelp: 'Click to select a sound file',
       currentLabel: 'Current: {value}',
