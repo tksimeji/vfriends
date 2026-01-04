@@ -22,6 +22,7 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-opener = "2"
 tauri-plugin-autostart = "2.5.1"
 tauri-plugin-frame = { git = "https://github.com/clarifei/tauri-plugin-frame", branch = "main" }
+tauri-plugin-single-instance = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 vrchatapi = "1.20.6"

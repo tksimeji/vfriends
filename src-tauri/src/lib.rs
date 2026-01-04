@@ -24,7 +24,17 @@ pub fn run() {
                 .button_hover_bg("rgba(106,227,249,0.12)")
                 .build(),
         )
-        .plugin(tauri_plugin_autostart::Builder::new().args([shell::AUTOSTART_ARG]).build())
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
+        .plugin(
+            tauri_plugin_autostart::Builder::new()
+                .args([shell::AUTOSTART_ARG])
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             app.manage(SettingsStore::load(app.handle()));
