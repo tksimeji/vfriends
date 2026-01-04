@@ -16,6 +16,12 @@ pub async fn notify_friend_online(app: &AppHandle, event: FriendOnlineEvent) -> 
     let app_settings = app.state::<SettingsStore>().snapshot();
     let friend_settings = app_settings.friend_settings_of(&event.user_id);
 
+    if let Some(friend_settings) = friend_settings {
+        if !friend_settings.enabled {
+            return Ok(());
+        }
+    }
+
     let title = &event.user.display_name;
     let body = friend_settings
         .filter(|fs| fs.use_override)
