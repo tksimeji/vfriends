@@ -88,6 +88,7 @@ const createState = () => {
 
   const clearDefaultSound = () => {
     appSettings.value.defaultSound = null;
+    queueSave();
   };
 
   const previewSound = async (value?: string | null) => {

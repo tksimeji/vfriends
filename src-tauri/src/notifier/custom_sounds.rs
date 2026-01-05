@@ -1,5 +1,6 @@
 use crate::vrchat_utils::AppResult;
 use rodio::{Decoder, OutputStream, Sink};
+use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
@@ -48,14 +49,18 @@ pub fn play_custom_sound(path: PathBuf) {
 }
 
 pub fn store_custom_sound(app: &AppHandle, name: &str, bytes: &[u8]) -> Result<PathBuf, String> {
-    let file_name = custom_sound_file_name(Path::new(name))?;
+    let ext = sound_extension(Path::new(name))?;
+    let hash = hash_bytes(bytes);
+    let file_name = format!("{hash}.{ext}");
     let base_path = sound_directory(app)?;
     let path = base_path.join(file_name);
-    std::fs::write(&path, bytes).map_err(|err| err.to_string())?;
+    if !path.exists() {
+        std::fs::write(&path, bytes).map_err(|err| err.to_string())?;
+    }
     Ok(path)
 }
 
-fn sound_directory(app: &AppHandle) -> Result<PathBuf, String> {
+pub(crate) fn sound_directory(app: &AppHandle) -> Result<PathBuf, String> {
     let base = app
         .path()
         .app_data_dir()
@@ -65,7 +70,33 @@ fn sound_directory(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(base)
 }
 
-fn custom_sound_file_name(path: &Path) -> AppResult<String> {
+pub fn cleanup_custom_sounds(
+    app: &AppHandle,
+    referenced_files: &std::collections::HashSet<String>,
+) -> Result<(), String> {
+    let base_path = sound_directory(app)?;
+    let entries = std::fs::read_dir(&base_path).map_err(|err| err.to_string())?;
+
+    for entry in entries {
+        let entry = entry.map_err(|err| err.to_string())?;
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+        let Some(name) = path.file_name().and_then(|value| value.to_str()) else {
+            continue;
+        };
+        if referenced_files.contains(name) {
+            continue;
+        }
+        if let Err(err) = std::fs::remove_file(&path) {
+            log::warn!("Failed to remove unused sound '{}': {err}", path.display());
+        }
+    }
+    Ok(())
+}
+
+fn sound_extension(path: &Path) -> AppResult<String> {
     let ext = path
         .extension()
         .and_then(|ext| ext.to_str())
@@ -77,23 +108,10 @@ fn custom_sound_file_name(path: &Path) -> AppResult<String> {
         return Err(String::from("Unsupported audio format."));
     }
 
-    let stem = path
-        .file_stem()
-        .and_then(|stem| stem.to_str())
-        .unwrap_or("sound");
-    let filtered: String = stem
-        .chars()
-        .map(|ch| if ch.is_ascii_alphanumeric() { ch } else { '_' })
-        .collect();
-    let safe_stem = if filtered.is_empty() {
-        String::from("sound")
-    } else {
-        filtered
-    };
-    let suffix = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|value| value.as_millis())
-        .unwrap_or(0);
+    Ok(ext)
+}
 
-    Ok(format!("{safe_stem}-{suffix}.{ext}"))
+fn hash_bytes(bytes: &[u8]) -> String {
+    let digest = Sha256::digest(bytes);
+    format!("{:x}", digest)
 }

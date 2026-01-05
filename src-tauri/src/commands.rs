@@ -10,9 +10,7 @@ use vrchatapi::models;
 use vrchatapi::models::{CurrentUser, LimitedUserFriend};
 
 #[tauri::command]
-pub async fn fetch_friends(
-    state: State<'_, AuthState>,
-) -> AppResult<Vec<LimitedUserFriend>> {
+pub async fn fetch_friends(state: State<'_, AuthState>) -> AppResult<Vec<LimitedUserFriend>> {
     vrchat_utils::fetch_all_friends(state.inner()).await
 }
 
@@ -35,7 +33,10 @@ pub async fn begin_auth(
     username: String,
     password: String,
 ) -> AppResult<()> {
-    state.inner().begin_auth_flow(&app, username, password).await
+    state
+        .inner()
+        .begin_auth_flow(&app, username, password)
+        .await
 }
 
 #[tauri::command]
@@ -72,6 +73,7 @@ pub fn fetch_friend_settings(
 
 #[tauri::command]
 pub fn set_friend_settings(
+    app: AppHandle,
     state: State<'_, SettingsStore>,
     friend_id: String,
     patch: FriendSettingsPatch,
@@ -95,18 +97,18 @@ pub fn set_friend_settings(
             entry.sound_override = normalize_optional(sound_override);
         }
     });
+    notifier::cleanup_unused_sounds(&app, &state.snapshot());
     Ok(())
 }
 
 #[tauri::command]
-pub fn fetch_app_settings(
-    state: State<'_, SettingsStore>,
-) -> AppResult<AppSettings> {
+pub fn fetch_app_settings(state: State<'_, SettingsStore>) -> AppResult<AppSettings> {
     Ok(state.snapshot())
 }
 
 #[tauri::command]
 pub fn set_app_settings(
+    app: AppHandle,
     state: State<'_, SettingsStore>,
     settings: AppSettingsPatch,
 ) -> AppResult<()> {
@@ -118,6 +120,7 @@ pub fn set_app_settings(
             current.default_sound = normalize_optional(default_sound);
         }
     });
+    notifier::cleanup_unused_sounds(&app, &state.snapshot());
     Ok(())
 }
 
