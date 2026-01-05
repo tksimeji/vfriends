@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {computed} from 'vue';
 import {SearchIcon, SettingsIcon, XIcon} from 'lucide-vue-next';
+import {resolveCurrentUserAvatarUrl} from '../../composables/useAvatarUrl';
 import {VRChat} from '../../vrchat.ts';
 import type {FriendsStatusMessage} from './types';
 import {useI18n} from 'vue-i18n';
@@ -23,7 +24,7 @@ const emit = defineEmits<{
 const accountAvatarUrl = computed(() => {
   const user = props.authedUser;
   if (!user) return '';
-  return VRChat.currentUserAvatarUrl(user);
+  return resolveCurrentUserAvatarUrl(user);
 });
 
 const accountInitial = computed(() => {

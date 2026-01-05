@@ -1,18 +1,21 @@
 const ja = {
-  common: {
-    appSettings: 'アプリ設定',
-    clear: 'クリア',
-    close: '閉じる',
-    default: 'デフォルト',
+  titleBar: {
+    search: 'ここでフレンドを検索',
+  },
+  filePicker: {
+    clear: '削除',
+    noFileSelected: '未設定',
+  },
+  userStatus: {
+    joinMe: 'だれでもおいで',
+    online: 'オンライン',
+    askMe: 'きいてみてね',
+    doNotDisturb: '取り込み中',
+    offline: 'オフライン',
+  },
+  input: {
     hidePassword: 'パスワードを隠す',
-    logout: 'ログアウト',
-    logoutAction: 'ログアウトする',
-    preview: 'プレビュー: {text}',
-    search: '検索',
-    select: '選択',
     showPassword: 'パスワードを表示',
-    testSound: 'テスト再生',
-    vrchatUser: 'VRChat User',
   },
   auth: {
     displayName: '表示名',
@@ -20,6 +23,7 @@ const ja = {
     loginSubtitle: 'VRChatにログイン',
     loginSuccess: 'ログイン成功',
     loginSuccessDetail: 'VRChatにログインしました。',
+    vrchatUserFallback: 'VRChat User',
     passwordPlaceholder: 'パスワード',
     userId: 'ユーザーID',
     usernamePlaceholder: 'ユーザー名',
@@ -41,6 +45,10 @@ const ja = {
     },
     back: '戻る',
     submit: '送信',
+    success: {
+      close: '閉じる',
+      logout: 'ログアウト',
+    },
     errors: {
       authFailed: '認証に失敗しました。',
       unsupported2fa: '未対応の2FA方式です。',
@@ -64,19 +72,15 @@ const ja = {
     clickCardHint: 'カードをクリックで通知設定',
     updating: '更新中...',
     searchPlaceholder: 'フレンド検索...',
-    searchPlaceholderTitlebar: 'ここでフレンドを検索',
     lastOnline: '最終オンライン：{value}',
-  },
-  notifications: {
-    defaultMessageTemplate: '{name} がオンラインになりました',
-    errors: {
-      loadFailed: '通知設定の読み込みに失敗しました。',
-      saveFailed: '通知設定の保存に失敗しました。',
-    },
   },
   settings: {
     noSettings: 'ここに表示できる設定がありません。',
     accountTitle: 'アカウント設定',
+    vrchatUserFallback: 'VRChat User',
+    actions: {
+      logout: 'ログアウトする',
+    },
     languageTitle: '言語',
     languageLabel: 'アプリの言語',
     languageHelper: '変更はすぐに反映されます。',
@@ -84,13 +88,23 @@ const ja = {
       en: 'English',
       ja: '日本語',
     },
-    notificationsTitle: '通知設定',
-    notificationsDescription:
-      'フレンドに個別の設定を行わない場合、この設定が適用されます。',
-    notificationMessageLabel: '通知メッセージ',
-    notificationMessagePlaceholder: '{name} がオンラインになりました',
-    notificationSoundLabel: '通知音（ファイル選択）',
-    notificationSoundHelper: 'クリックして音声ファイルを選択',
+    notifications: {
+      title: '通知設定',
+      description:
+        'フレンドに個別の設定を行わない場合、この設定が適用されます。',
+      messageLabel: '通知メッセージ',
+      messagePlaceholder: '{name} がオンラインになりました',
+      soundLabel: '通知音（ファイル選択）',
+      testSound: 'テスト再生',
+      defaultMessageTemplate: '{name} がオンラインになりました',
+      errors: {
+        loadFailed: '通知設定の読み込みに失敗しました。',
+        saveFailed: '通知設定の保存に失敗しました。',
+      },
+    },
+    sidebar: {
+      appSettings: 'アプリ設定',
+    },
     friend: {
       deliveryTitle: '通知の配信',
       deliveryOn:
@@ -102,21 +116,10 @@ const ja = {
       customizeOff:
         'トグルスイッチをオンにして，このフレンドからの通知を特別なものにできます:)',
       messageLabel: '通知メッセージ',
-      messageHelp: '空欄は全体設定を使用',
+      messageHelper: '「%s」は表示名に置き換えられます。',
       soundLabel: '通知サウンド',
-      soundHelp: 'クリックして音声ファイルを選択',
-      currentLabel: '現在: {value}',
-      currentCustom: '個別設定',
-      currentGlobal: '全体設定',
       previewSound: 'サウンドをプレビュー',
     },
-  },
-  status: {
-    joinMe: 'だれでもおいで',
-    active: 'オンライン',
-    askMe: 'きいてみてね',
-    busy: '取り込み中',
-    offline: 'オフライン',
   },
   time: {
     minutesAgo: '{count}分前',

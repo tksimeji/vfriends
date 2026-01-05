@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import {EllipsisIcon, PlayIcon, XIcon} from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
-import UserAvatar from '../../components/UserAvatar.vue';
+import {computed, onMounted} from 'vue';
+import VrcAvatar from '../../components/VrcAvatar.vue';
 import VrcButton from '../../components/VrcButton.vue';
+import {useAppSettings} from '../../composables/useAppSettings';
 import {t} from '../../i18n.ts';
-import {fetchAppSettings, previewNotificationSound} from '../../invokes.ts';
-import {AppSettings, FriendSettings} from '../../types.ts';
+import {previewNotificationSound} from '../../invokes.ts';
+import {FriendSettings} from '../../types.ts';
 import {VRChat} from '../../vrchat.ts';
 
 const props = defineProps<{
@@ -13,30 +14,30 @@ const props = defineProps<{
   settings: FriendSettings | null;
 }>();
 
-const appSettings = ref<AppSettings | null>(null);
-const loadAppSettings = async () => {
-  appSettings.value = await fetchAppSettings();
-};
+const {appSettings, refresh} = useAppSettings();
 onMounted(() => {
-  void loadAppSettings();
+  void refresh();
 });
+
+const replacePlaceholder = (input: string, value: string) =>
+    input.split('%s').join(value);
 
 const message = computed(() => {
   const messageOverride = props.settings?.messageOverride;
   if (props.settings?.useOverride && messageOverride != null) {
-    return messageOverride.replace('%s', props.user.displayName);
+    return replacePlaceholder(messageOverride, props.user.displayName);
   }
 
   const defaultMessage = appSettings.value?.defaultMessage ?? '%s is now online!';
-  return defaultMessage.replace('%s', props.user.displayName);
+  return replacePlaceholder(defaultMessage, props.user.displayName);
 });
 
 const handlePlayNotificationSound = () => {
   const friendSettings = props.settings;
   if (friendSettings?.useOverride && friendSettings.soundOverride) {
-    previewNotificationSound(friendSettings.soundOverride)
+    previewNotificationSound(friendSettings.soundOverride);
   } else {
-    previewNotificationSound(null);
+    previewNotificationSound(appSettings.value.defaultSound ?? null);
   }
 };
 </script>
@@ -50,7 +51,8 @@ const handlePlayNotificationSound = () => {
     />
 
     <div class="absolute flex inset-0 items-center justify-center">
-      <div class="bg-gray-800/80 backdrop-blur-md border-2 border-gray-600/80 flex flex-col gap-2 px-6 py-3 rounded-lg shadow-xl w-3/4">
+      <div
+          class="bg-gray-800/80 backdrop-blur-md border-2 border-gray-600/80 flex flex-col gap-2 px-6 py-3 rounded-lg shadow-xl w-3/4">
         <div class="flex items-center justify-between">
           <p class="text-[10px] text-white">VFriends</p>
           <div class="flex gap-4 items-center">
@@ -60,7 +62,7 @@ const handlePlayNotificationSound = () => {
         </div>
 
         <div class="flex gap-4 items-center">
-          <UserAvatar :user="props.user" :size="64"/>
+          <VrcAvatar :user="props.user" :size="64"/>
           <div>
             <p class="text-lg text-white">{{ props.user.displayName }}</p>
             <p class="text-md">{{ message }}</p>

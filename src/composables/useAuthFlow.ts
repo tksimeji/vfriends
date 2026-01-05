@@ -1,9 +1,11 @@
 import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {computed, onBeforeUnmount, onMounted, reactive, shallowRef, toRefs} from 'vue';
 import {t} from '../i18n';
+import {beginAuth, restoreSession, verifyTwoFactor} from '../invokes';
 import {VRChat} from '../vrchat.ts';
 import {useAuthSession} from './useAuthSession';
-import {beginAuth, restoreSession, verifyTwoFactor} from '../invokes';
+
+const KNOWN_2FA_METHODS: TwoFactorMethod[] = ['totp', 'emailOtp', 'otp'];
 
 export type UseLoginFlowOptions = {
   onLoginSuccess?: (user: VRChat.CurrentUser | null) => void;
@@ -33,8 +35,6 @@ type AuthEvent =
   | { type: 'success'; user?: VRChat.CurrentUser }
   | { type: 'failure'; message: string; code?: string }
   | { type: 'loggedOut' };
-
-const KNOWN_2FA_METHODS: TwoFactorMethod[] = ['totp', 'emailOtp', 'otp'];
 
 const methodSort = (a: TwoFactorMethod, b: TwoFactorMethod) =>
   KNOWN_2FA_METHODS.indexOf(a) - KNOWN_2FA_METHODS.indexOf(b);
@@ -126,7 +126,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
         state.currentStep = 'success';
         state.authedUser = event.user ?? {
           id: '',
-          displayName: state.username || t('common.vrchatUser'),
+          displayName: state.username || t('auth.vrchatUserFallback'),
           username: state.username || undefined,
           currentAvatarImageUrl: '',
           profilePicOverride: '',

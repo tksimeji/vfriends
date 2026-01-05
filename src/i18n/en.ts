@@ -1,18 +1,26 @@
 const en = {
-  common: {
-    appSettings: 'App config',
-    clear: 'Clear',
-    close: 'Close',
-    default: 'Default',
+  input: {
     hidePassword: 'Hide password',
-    logout: 'Log out',
-    logoutAction: 'Log out',
-    preview: 'Preview: {text}',
-    search: 'Search',
-    select: 'Select',
     showPassword: 'Show password',
-    testSound: 'Test sound',
-    vrchatUser: 'VRChat User',
+  },
+  filePicker: {
+    clear: 'Clear',
+    noFileSelected: 'Not set',
+  },
+  titleBar: {
+    search: 'Search friends here',
+  },
+  userStatus: {
+    joinMe: 'Join Me',
+    online: 'Online',
+    askMe: 'Ask Me',
+    doNotDisturb: 'Do Not Disturb',
+    offline: 'Offline',
+  },
+  time: {
+    minutesAgo: '{count}m ago',
+    hoursAgo: '{count}h ago',
+    daysAgo: '{count}d ago',
   },
   auth: {
     displayName: 'Display name',
@@ -20,6 +28,7 @@ const en = {
     loginSubtitle: 'Log in to VRChat',
     loginSuccess: 'Login successful',
     loginSuccessDetail: 'You are now logged in to VRChat.',
+    vrchatUserFallback: 'VRChat User',
     passwordPlaceholder: 'Password',
     userId: 'User ID',
     usernamePlaceholder: 'Username',
@@ -41,6 +50,10 @@ const en = {
     },
     back: 'Back',
     submit: 'Submit',
+    success: {
+      close: 'Close',
+      logout: 'Log out',
+    },
     errors: {
       authFailed: 'Authentication failed.',
       unsupported2fa: 'Unsupported 2FA method.',
@@ -64,19 +77,15 @@ const en = {
     clickCardHint: 'Click a card to open notification config',
     updating: 'Updating...',
     searchPlaceholder: 'Search friends...',
-    searchPlaceholderTitlebar: 'Search friends here',
     lastOnline: 'Last online: {value}',
-  },
-  notifications: {
-    defaultMessageTemplate: '{name} is online',
-    errors: {
-      loadFailed: 'Failed to load notification config.',
-      saveFailed: 'Failed to save notification config.',
-    },
   },
   settings: {
     noSettings: 'No config available.',
     accountTitle: 'Account config',
+    vrchatUserFallback: 'VRChat User',
+    actions: {
+      logout: 'Log out',
+    },
     languageTitle: 'Language',
     languageLabel: 'App language',
     languageHelper: 'Applies immediately. Restart not required.',
@@ -84,13 +93,22 @@ const en = {
       en: 'English',
       ja: 'Japanese',
     },
-    notificationsTitle: 'Notification config',
-    notificationsDescription:
-      'These config apply when no per-friend override exists.',
-    notificationMessageLabel: 'Notification message',
-    notificationMessagePlaceholder: '{name} is online',
-    notificationSoundLabel: 'Notification sound (file)',
-    notificationSoundHelper: 'Click to select a sound file',
+    notifications: {
+      title: 'Notification config',
+      description: 'These config apply when no per-friend override exists.',
+      messageLabel: 'Notification message',
+      messagePlaceholder: '{name} is online',
+      soundLabel: 'Notification sound (file)',
+      testSound: 'Test sound',
+      defaultMessageTemplate: '{name} is online',
+      errors: {
+        loadFailed: 'Failed to load notification config.',
+        saveFailed: 'Failed to save notification config.',
+      },
+    },
+    sidebar: {
+      appSettings: 'App config',
+    },
     friend: {
       deliveryTitle: 'Notification delivery',
       deliveryOn:
@@ -102,26 +120,10 @@ const en = {
       customizeOff:
         'Turn this on to customize notifier for this friend.',
       messageLabel: 'Notification message',
-      messageHelp: 'Empty uses global config',
+      messageHelper: '"%s" will be replaced with the display name.',
       soundLabel: 'Notification sound',
-      soundHelp: 'Click to select a sound file',
-      currentLabel: 'Current: {value}',
-      currentCustom: 'Custom',
-      currentGlobal: 'Global',
       previewSound: 'Preview Sound',
     },
-  },
-  status: {
-    joinMe: 'Join Me',
-    active: 'Online',
-    askMe: 'Ask Me',
-    busy: 'Do Not Disturb',
-    offline: 'Offline',
-  },
-  time: {
-    minutesAgo: '{count}m ago',
-    hoursAgo: '{count}h ago',
-    daysAgo: '{count}d ago',
   },
 };
 

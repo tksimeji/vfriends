@@ -1,124 +1,62 @@
 <script setup lang="ts">
-import {computed, onMounted, ref, watch} from 'vue';
+import {computed, onMounted} from 'vue';
 import {useI18n} from 'vue-i18n';
-import StatusBadge from '../../components/StatusBadge.vue';
-import UserAvatar from '../../components/UserAvatar.vue';
+import VrcStatus from '../../components/VrcStatus.vue';
+import VrcAvatar from '../../components/VrcAvatar.vue';
 import VrcFilePicker from '../../components/VrcFilePicker.vue';
 import VrcInput from '../../components/VrcInput.vue';
 import VrcToggle from '../../components/VrcToggle.vue';
 import {useDominantColor} from '../../composables/useDominantColor';
-import {fetchFriendSettings, setFriendSettings} from '../../invokes';
-import {FriendSettings} from '../../types.ts';
-import {resolveSoundPath, soundLabel} from '../../utils/notificationSound';
+import {useAppSettings} from '../../composables/useAppSettings';
+import {useFriendSettings} from '../../composables/useFriendSettings';
 import {VRChat} from '../../vrchat.ts';
 import NotificationPreview from './NotificationPreview.vue';
 import SettingsCard from './SettingsCard.vue';
 import SettingsRow from './SettingsRow.vue';
-import type {FriendSettingsContext} from './types';
 
 const props = defineProps<{
   friend: VRChat.LimitedUserFriend;
-  context: FriendSettingsContext;
-}>();
-
-const emit = defineEmits<{
-  (e: 'updated'): void;
 }>();
 
 const {t} = useI18n();
-
-const settings = ref<FriendSettings | null>(null);
-
-const loadSettings = async () => {
-  const map = await fetchFriendSettings();
-  settings.value = map?.[props.friend.id] ?? null;
-};
-
-onMounted(() => {
-  void loadSettings();
-});
-
-watch(
-    () => props.friend.id,
-    () => {
-      void loadSettings();
-    },
-);
-
 const friendSource = computed(() => props.friend);
 const {overlayStyle} = useDominantColor(friendSource);
+const {appSettings, refresh: refreshAppSettings} = useAppSettings();
 
-const notificationsEnabled = computed(() => settings.value?.enabled !== false);
-const customizeEnabled = computed(() => settings.value?.useOverride ?? false);
-const canCustomize = computed(
-    () => notificationsEnabled.value && customizeEnabled.value,
-);
+const {
+  settings,
+  messageDraft,
+  notificationsEnabled,
+  customizeEnabled,
+  canCustomize,
+  soundDraft,
+  handleMessageInput,
+  commitMessage,
+  selectSound,
+  clearSound,
+  toggleNotifications,
+  toggleCustomize,
+} = useFriendSettings({
+  friendId: computed(() => props.friend.id),
+});
 
-const messageDraft = ref('');
-const soundDraft = ref('');
-
-watch(
-    () => settings.value,
-    (next) => {
-      messageDraft.value = next?.messageOverride ?? '';
-      soundDraft.value = next?.soundOverride ?? '';
-    },
-    {immediate: true},
-);
-
-const displayedSoundLabel = computed(() =>
-    soundLabel(soundDraft.value || props.context.globalSound),
-);
-
-const patchSettings = async (patch: Partial<FriendSettings>) => {
-  await setFriendSettings(props.friend.id, patch);
-  await loadSettings();
-  emit('updated');
-};
-
-const handleToggleNotifications = (value: boolean) => {
-  void patchSettings({enabled: value});
-};
-
-const handleToggleCustomize = (value: boolean) => {
-  void patchSettings({useOverride: value});
-};
-
-const handleMessageInput = (event: Event) => {
-  messageDraft.value = (event.target as HTMLInputElement).value;
-};
-
-const commitMessage = () => {
-  // messageDraft.value = messageDraft.value;
-  const trimmed = messageDraft.value.trim();
-  void patchSettings({messageOverride: trimmed ?? null});
-};
-
-const handleSelectSound = async (file: File | null) => {
-  const path = await resolveSoundPath(file);
-  if (!path) return;
-  soundDraft.value = path;
-  await patchSettings({soundOverride: path});
-};
-
-const handleClearSound = () => {
-  soundDraft.value = '';
-  void patchSettings({soundOverride: null});
-};
+onMounted(() => {
+  void refreshAppSettings();
+});
 </script>
 
 <template>
   <div class="min-h-full p-5" :style="overlayStyle">
     <div class="flex flex-col gap-4 select-none">
       <div class="flex gap-3 items-center">
-        <UserAvatar :user="friend" :size="48"/>
+        <VrcAvatar :user="friend" :size="48"/>
         <div>
           <p class="font-bold text-xl text-vrc-friend">{{ friend.displayName }}</p>
-          <StatusBadge
+          <VrcStatus
               class="gap-2 text-vrc-text text-xs"
               label-class="text-vrc-text text-xs"
               :size="12"
-              :friend="friend"
+              :user="friend"
           />
         </div>
       </div>
@@ -137,7 +75,7 @@ const handleClearSound = () => {
           <template #control>
             <VrcToggle
                 :model-value="notificationsEnabled"
-                @update:model-value="handleToggleNotifications"
+                @update:model-value="toggleNotifications"
             />
           </template>
         </SettingsRow>
@@ -164,7 +102,7 @@ const handleClearSound = () => {
             <VrcToggle
                 :model-value="customizeEnabled"
                 :disabled="!notificationsEnabled"
-                @update:model-value="handleToggleCustomize"
+                @update:model-value="toggleCustomize"
             />
           </template>
         </SettingsRow>
@@ -174,20 +112,22 @@ const handleClearSound = () => {
               :label="t('settings.friend.messageLabel')"
               :value="messageDraft"
               :disabled="!canCustomize"
-              :placeholder="props.context.globalMessageTemplate"
+              :placeholder="appSettings.defaultMessage"
               @blur="commitMessage"
               @input="handleMessageInput"
           />
+          <p class="mt-1 text-vrc-text text-xs">
+            {{ t('settings.friend.messageHelper') }}
+          </p>
 
           <VrcFilePicker
+              accept=".mp3,.wav,.ogg,.flac,.m4a,audio/*"
               :label="t('settings.friend.soundLabel')"
-              :value="displayedSoundLabel"
-              :helper="t('settings.friend.soundHelp')"
+              :value="soundDraft"
               :disabled="!canCustomize"
               :clearable="true"
-              accept=".mp3,.wav,.ogg,.flac,.m4a,audio/*"
-              @select="handleSelectSound"
-              @clear="handleClearSound"
+              @select="selectSound"
+              @clear="clearSound"
           />
         </div>
       </SettingsCard>

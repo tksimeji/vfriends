@@ -54,7 +54,7 @@ const {t} = useI18n();
 
     <AuthSuccessPage
         v-else
-        :user="authedUser ?? { id: '', displayName: t('common.vrchatUser'), currentAvatarImageUrl: '', profilePicOverride: '', userIcon: '' }"
+        :user="authedUser ?? { id: '', displayName: t('auth.vrchatUserFallback'), currentAvatarImageUrl: '', profilePicOverride: '', userIcon: '' }"
         :is-submitting="isSubmitting"
         @close="handleSuccessClose"
         @logout="handleLogout"

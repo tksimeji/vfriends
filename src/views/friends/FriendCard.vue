@@ -2,8 +2,10 @@
 import {VolumeOffIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref, watch} from 'vue';
 import {fetchFriendSettings} from '../../invokes';
+import {resolveFriendAvatarUrl} from '../../composables/useAvatarUrl';
 import {useDominantColor} from '../../composables/useDominantColor';
-import StatusBadge from '../../components/StatusBadge.vue';
+import {useFriendStatus} from '../../composables/useFriendStatus';
+import VrcStatus from '../../components/VrcStatus.vue';
 import {VRChat} from '../../vrchat.ts';
 import {useI18n} from 'vue-i18n';
 
@@ -31,14 +33,13 @@ onMounted(() => {
   void refreshNotificationStatus();
 });
 
-const isOffline = computed(() => VRChat.isOffline(props.friend));
-const avatarUrl = computed(() => VRChat.avatarUrl(props.friend));
+const {isOffline, lastOnline} = useFriendStatus(computed(() => props.friend));
+const avatarUrl = computed(() => resolveFriendAvatarUrl(props.friend));
 const colorSource = computed(() => props.friend);
 const {overlayStyle, rgb} = useDominantColor(colorSource);
 const isHovered = ref(false);
 const {t} = useI18n();
 
-const lastOnline = computed(() => VRChat.formatLastOnline(props.friend));
 const lastOnlineLabel = computed(() =>
   lastOnline.value ? t('friends.lastOnline', {value: lastOnline.value}) : '',
 );
@@ -89,8 +90,8 @@ watch(rgb, () => {
           />
         </div>
       </div>
-      <StatusBadge
-          :friend="props.friend"
+      <VrcStatus
+          :user="props.friend"
           class="gap-1"
           label-class="text-vrc-highlight/60"
           :size="12"

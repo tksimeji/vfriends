@@ -2,13 +2,13 @@
 import {SearchIcon, XIcon} from 'lucide-vue-next';
 import {computed, nextTick, onBeforeUpdate, onMounted, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
-import {VRChat} from '../../vrchat.ts';
+import {useFriends} from '../../composables/useFriends';
+import VrcAvatar from '../VrcAvatar.vue';
+
+const MAX_VISIBLE = 10;
 
 const props = defineProps<{
   modelValue: string;
-  placeholder?: string;
-  suggestions?: VRChat.LimitedUserFriend[];
-  autoFocus?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -16,77 +16,106 @@ const emit = defineEmits<{
   (e: 'select', friendId: string): void;
 }>();
 
-const searchActive = computed(() => props.modelValue.trim().length > 0);
-const normalizedQuery = computed(() => props.modelValue.trim().toLowerCase());
-const activeIndex = ref(-1);
-const suggestionRefs = ref<HTMLElement[]>([]);
-const inputRef = ref<HTMLInputElement | null>(null);
+const {sortedItems} = useFriends();
 const {t} = useI18n();
 
-const resolvedPlaceholder = computed(
-  () => props.placeholder ?? t('friends.searchPlaceholderTitlebar'),
-);
+const rootRef = ref<HTMLElement | null>(null);
+const inputRef = ref<HTMLInputElement | null>(null);
+const suggestionRefs = ref<HTMLElement[]>([]);
+const activeSuggestion = ref(-1);
+const hoveredSuggestion = ref(-1);
+const isOpen = ref(false);
 
-const MAX_VISIBLE = 10;
+const searchQuery = computed(() => props.modelValue.trim());
+const normalizedQuery = computed(() => searchQuery.value.toLowerCase());
+const filteredSuggestions = computed(() => {
+  const normalized = normalizedQuery.value;
+  if (!normalized) return [];
+  return sortedItems.value
+      .filter((friend) => friend.displayName.toLowerCase().includes(normalized))
+      .slice(0, MAX_VISIBLE);
+});
+const hasSuggestions = computed(() => filteredSuggestions.value.length > 0);
+const shouldShowSuggestions = computed(() => isOpen.value && hasSuggestions.value);
 
-const clearSearch = () => {
+const clearInput = () => {
+  isOpen.value = false;
+  activeSuggestion.value = -1;
+  hoveredSuggestion.value = -1;
   emit('update:modelValue', '');
 };
 
-const filteredSuggestions = computed(() => {
-  const query = normalizedQuery.value;
-  if (!query) return [];
-  const source = props.suggestions ?? [];
-  return source
-    .filter((friend) => friend.displayName.toLowerCase().includes(query))
-    .slice(0, MAX_VISIBLE);
-});
-
-const hasSuggestions = computed(() => filteredSuggestions.value.length > 0);
-
-const handleInput = (event: Event) => {
+const handleInput = (event: InputEvent) => {
+  isOpen.value = true;
   emit('update:modelValue', (event.target as HTMLInputElement).value);
 };
 
 const selectSuggestion = (friendId: string) => {
   emit('select', friendId);
-  clearSearch();
+  clearInput();
 };
 
-const moveActive = (delta: number) => {
+const setActiveSuggestion = (index: number) => {
+  activeSuggestion.value = index;
+};
+
+const moveActiveSuggestion = (delta: number) => {
   const count = filteredSuggestions.value.length;
   if (count === 0) return;
-  const next = (activeIndex.value + delta + count) % count;
-  activeIndex.value = next;
+  const next = (activeSuggestion.value + delta + count) % count;
+  setActiveSuggestion(next);
+};
+
+const selectActiveSuggestion = () => {
+  const target = filteredSuggestions.value[activeSuggestion.value];
+  if (!target) return;
+  selectSuggestion(target.id);
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
-  if (!hasSuggestions.value) return;
-  if (event.key === 'ArrowDown') {
-    event.preventDefault();
-    moveActive(1);
-    return;
-  }
-  if (event.key === 'ArrowUp') {
-    event.preventDefault();
-    moveActive(-1);
-    return;
-  }
-  if (event.key === 'Enter') {
-    const target = filteredSuggestions.value[activeIndex.value];
-    if (target) {
+  switch (event.key) {
+    case 'ArrowDown': {
       event.preventDefault();
-      selectSuggestion(target.id);
+      moveActiveSuggestion(1);
+      return;
     }
-    return;
-  }
-  if (event.key === 'Escape') {
-    clearSearch();
+    case 'ArrowUp': {
+      event.preventDefault();
+      moveActiveSuggestion(-1);
+      return;
+    }
+    case 'Enter': {
+      event.preventDefault();
+      selectActiveSuggestion();
+      return;
+    }
+    case 'Escape': {
+      clearInput();
+      return;
+    }
   }
 };
 
+const handleFocusIn = () => {
+  if (searchQuery.value.length > 0) {
+    isOpen.value = true;
+  }
+};
+
+const handleFocusOut = () => {
+  requestAnimationFrame(() => {
+    const root = rootRef.value;
+    if (!root) {
+      isOpen.value = false;
+      return;
+    }
+    if (!root.contains(document.activeElement)) {
+      isOpen.value = false;
+    }
+  });
+};
+
 const focusInput = async () => {
-  if (!props.autoFocus) return;
   await nextTick();
   inputRef.value?.focus();
 };
@@ -97,13 +126,19 @@ onBeforeUpdate(() => {
 
 watch(filteredSuggestions, (next) => {
   if (next.length === 0) {
-    activeIndex.value = -1;
-  } else if (activeIndex.value >= next.length) {
-    activeIndex.value = next.length - 1;
+    setActiveSuggestion(-1);
+  } else if (activeSuggestion.value >= next.length) {
+    setActiveSuggestion(next.length - 1);
   }
 });
 
-watch(activeIndex, (next) => {
+watch(searchQuery, (next) => {
+  if (!next) {
+    isOpen.value = false;
+  }
+});
+
+watch(activeSuggestion, (next) => {
   if (next < 0) return;
   const el = suggestionRefs.value[next];
   if (el) {
@@ -111,24 +146,22 @@ watch(activeIndex, (next) => {
   }
 });
 
-watch(
-  () => props.autoFocus,
-  (next) => {
-    if (next) {
-      void focusInput();
-    }
-  },
-);
-
 onMounted(() => {
   void focusInput();
 });
 </script>
 
 <template>
-  <div class="relative max-w-md w-full" data-tauri-drag-region>
+  <div
+      ref="rootRef"
+      class="max-w-md relative w-full"
+      :data-tauri-drag-region="true"
+      @focusin="handleFocusIn"
+      @focusout="handleFocusOut"
+  >
     <div
-        class="bg-vrc-background-secondary border-b border-b-transparent flex gap-2 items-center min-w-0 px-2 rounded-md w-full focus:border-b focus-within:border-b-vrc-highlight"
+        class="bg-vrc-background-secondary border-b border-b-transparent flex gap-2 items-center min-w-0 px-2 rounded-md w-full
+         focus:border-b focus-within:border-b-vrc-highlight"
         data-tauri-drag-region="false"
     >
       <input
@@ -136,17 +169,17 @@ onMounted(() => {
           ref="inputRef"
           type="text"
           class="grow outline-none py-2 text-vrc-text text-xs"
-          :placeholder="resolvedPlaceholder"
           data-tauri-drag-region="false"
+          :placeholder="t('titleBar.search')"
           @input="handleInput"
           @keydown="handleKeydown"
       />
       <button
-          v-if="searchActive"
+          v-if="searchQuery"
           type="button"
           class="p-1 rounded-md text-vrc-text/50 hover:bg-vrc-text/20 hover:text-vrc-text"
-          data-tauri-drag-region="false"
-          @click="clearSearch"
+          :data-tauri-drag-region="false"
+          @click="clearInput"
       >
         <XIcon :size="14"/>
       </button>
@@ -158,22 +191,54 @@ onMounted(() => {
       </button>
     </div>
 
-    <div
-        v-if="hasSuggestions"
-        class="absolute bg-vrc-background-secondary border border-vrc-highlight/20 max-h-64 mt-2 overflow-y-auto rounded-md shadow-xl w-full z-50"
-        data-tauri-drag-region="false"
-    >
-      <button
-          v-for="(friend, index) in filteredSuggestions"
-          :key="friend.id"
-          ref="suggestionRefs"
-          type="button"
-          class="flex gap-2 items-center px-3 py-2 text-left text-sm text-vrc-text w-full hover:bg-vrc-highlight/10"
-          :class="index === activeIndex ? 'bg-vrc-highlight/15' : ''"
-          @click="selectSuggestion(friend.id)"
+    <Transition name="suggestions-slide">
+      <div
+          v-if="shouldShowSuggestions"
+          class="absolute backdrop-blur-sm bg-vrc-background/60 border border-vrc-text/20 flex flex-col gap-1 max-h-64 mt-2 overflow-y-auto p-2 rounded-md shadow-xl w-full z-50"
+          data-tauri-drag-region="false"
       >
-        <span class="font-semibold truncate">{{ friend.displayName }}</span>
-      </button>
-    </div>
+        <button
+            v-for="(friend, index) in filteredSuggestions"
+            ref="suggestionRefs"
+            type="button"
+            class="flex gap-2 items-center pl-2 pr-4 py-3 rounded-lg select-none text-left text-sm text-vrc-text w-full hover:bg-vrc-text/20"
+            :key="friend.id"
+            :class="index === activeSuggestion ? 'bg-vrc-text/15' : ''"
+            @click="selectSuggestion(friend.id)"
+            @mouseenter="hoveredSuggestion = index"
+            @mouseleave="hoveredSuggestion = -1"
+        >
+          <span
+              v-if="index == activeSuggestion || index == hoveredSuggestion"
+              class="border-vrc-highlight border-2 h-8 rounded-4xl"
+          />
+          <span
+              v-else
+              class="border-2 border-transparent h-8"
+          />
+          <VrcAvatar :user="friend" class="rounded-sm"/>
+          <span class="font-semibold truncate">{{ friend.displayName }}</span>
+        </button>
+      </div>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.suggestions-slide-enter-active,
+.suggestions-slide-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.suggestions-slide-enter-from,
+.suggestions-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+}
+
+.suggestions-slide-enter-to,
+.suggestions-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+</style>

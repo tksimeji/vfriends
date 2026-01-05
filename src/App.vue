@@ -5,18 +5,15 @@ import TitleBar from './components/title/TitleBar.vue';
 import './style.css';
 import AuthModal from './views/auth/AuthModal.vue';
 import FriendsView from './views/friends/FriendsView.vue';
-import type {VRChat} from './vrchat.ts';
 import 'vue-final-modal/style.css';
 import {useAuthSession} from './composables/useAuthSession';
 import {logout, restoreSession} from './invokes';
 
-const {currentUser: authedUser, isAuthenticated, setCurrentUser, clearCurrentUser} =
-  useAuthSession();
+const {isAuthenticated, setCurrentUser, clearCurrentUser} = useAuthSession();
 const searchQuery = ref('');
 const isSettingsOpen = ref(false);
 const hoverColor = ref<[number, number, number] | null>(null);
 const authListener = ref<UnlistenFn | null>(null);
-const friendSuggestions = ref<VRChat.LimitedUserFriend[]>([]);
 
 type AuthEvent =
   | { type: 'started'; action: 'credentials' | 'twoFactor' }
@@ -87,10 +84,6 @@ const handleAuthEvent = (event: AuthEvent) => {
   }
 };
 
-const handleSuggestionsUpdated = (suggestions: VRChat.LimitedUserFriend[]) => {
-  friendSuggestions.value = suggestions;
-};
-
 onMounted(async () => {
   authListener.value = await listen<AuthEvent>('vrc:auth', (event) => {
     handleAuthEvent(event.payload);
@@ -129,9 +122,7 @@ onBeforeUnmount(() => {
     <Teleport to="#titlebar">
       <TitleBar
           v-model:query="searchQuery"
-          :authed-user="authedUser"
-          :hide-search="isSettingsOpen"
-          :suggestions="friendSuggestions"
+          :hide-search-box="isSettingsOpen"
           @open-settings="handleOpenSettings"
           @open-friend-settings="handleOpenFriendSettings"
       />
@@ -140,10 +131,8 @@ onBeforeUnmount(() => {
     <div class="flex flex-1 flex-col items-center min-h-0 overflow-hidden relative z-10">
       <FriendsView
           ref="friendsViewRef"
-          :authed-user="authedUser"
           :search-query="searchQuery"
           @hover-color="handleHoverColor"
-          @suggestions-updated="handleSuggestionsUpdated"
           @settings-opened="isSettingsOpen = true"
           @settings-closed="isSettingsOpen = false"
           @logout="handleLogoutFromTitle"

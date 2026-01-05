@@ -6,6 +6,7 @@ import type {VRChat} from '../../vrchat.ts';
 import SettingsModal from '../settings/SettingsModal.vue';
 import FriendsList from './FriendsList.vue';
 import type {FriendsStatusMessage} from './types';
+import {useAuthSession} from '../../composables/useAuthSession';
 
 const {
   sortedItems,
@@ -18,14 +19,12 @@ const {
 } = useFriends();
 
 const props = defineProps<{
-  authedUser: VRChat.CurrentUser | null;
   searchQuery: string;
 }>();
 
 const emit = defineEmits<{
   (e: 'settings-opened'): void;
   (e: 'settings-closed'): void;
-  (e: 'suggestions-updated', suggestions: VRChat.LimitedUserFriend[]): void;
   (e: 'hover-color', rgb: [number, number, number] | null): void;
   (e: 'logout'): void;
 }>();
@@ -49,7 +48,8 @@ const searchActive = computed(() => props.searchQuery.trim().length > 0);
 const totalCount = computed(() => sortedItems.value.length);
 const filteredCount = computed(() => filteredFriends.value.length);
 const {t} = useI18n();
-const isAuthed = computed(() => Boolean(props.authedUser));
+const {isAuthenticated} = useAuthSession();
+const isAuthed = computed(() => Boolean(isAuthenticated.value));
 const countLabel = computed(() =>
   searchActive.value
     ? t('friends.countFiltered', {
@@ -87,14 +87,6 @@ const statusMessage = computed<FriendsStatusMessage | null>(() => {
 });
 
 const showList = computed(() => !statusMessage.value);
-
-watch(
-  sortedItems,
-  () => {
-    emit('suggestions-updated', sortedItems.value);
-  },
-  {immediate: true},
-);
 
 onMounted(() => {
   if (isAuthed.value) {
@@ -143,7 +135,6 @@ defineExpose({
   <div class="flex flex-1 flex-col max-w-6xl min-h-0 mx-auto px-4 relative w-full">
     <SettingsModal
         ref="settingsModalRef"
-        :current-user="props.authedUser"
         :friends="sortedItems"
         @open="emit('settings-opened')"
         @close="emit('settings-closed')"

@@ -1,20 +1,25 @@
 <script setup lang="ts">
 import {SearchIcon, VolumeOffIcon} from 'lucide-vue-next';
-import {computed, nextTick, onBeforeUnmount, ref, watch} from 'vue';
+import {computed, nextTick, onBeforeUnmount, onMounted, ref, watch} from 'vue';
+import {useI18n} from 'vue-i18n';
 import {RecycleScroller} from 'vue-virtual-scroller';
-import StatusBadge from '../../components/StatusBadge.vue';
-import UserAvatar from '../../components/UserAvatar.vue';
+import VrcAvatar from '../../components/VrcAvatar.vue';
 import VrcButton from '../../components/VrcButton.vue';
 import VrcInput from '../../components/VrcInput.vue';
+import VrcStatus from '../../components/VrcStatus.vue';
+import {useAppSettings} from '../../composables/useAppSettings';
+import {useAuthSession} from '../../composables/useAuthSession';
 import {VRChat} from '../../vrchat.ts';
-import {useI18n} from 'vue-i18n';
+
+type RecycleScrollerHandle = {
+  scrollToItem: (index: number) => void;
+  scrollToPosition: (position: number) => void;
+};
 
 const props = defineProps<{
-  currentUser: VRChat.CurrentUser | null;
   friends: VRChat.LimitedUserFriend[];
   selectedId: string;
   scrollTargetId?: string | null;
-  isFriendEnabled: (friendId: string) => boolean;
 }>();
 
 const emit = defineEmits<{
@@ -22,21 +27,18 @@ const emit = defineEmits<{
   (e: 'scrolled'): void;
 }>();
 
-type RecycleScrollerHandle = {
-  scrollToItem: (index: number) => void;
-  scrollToPosition: (position: number) => void;
-};
+const {t} = useI18n();
+const {currentUser} = useAuthSession();
+const {appSettings, refresh} = useAppSettings();
 
 const scrollerRef = ref<RecycleScrollerHandle | null>(null);
 const isAlive = ref(true);
 const searchQuery = ref('');
-const {t} = useI18n();
+
 const filteredFriends = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
   if (!query) return props.friends;
-  return props.friends.filter((friend) =>
-      friend.displayName.toLowerCase().includes(query),
-  );
+  return props.friends.filter((friend) => friend.displayName.toLowerCase().includes(query));
 });
 
 const scrollToSelected = async () => {
@@ -66,6 +68,13 @@ const selectGlobal = () => {
 const selectFriend = (friendId: string) => {
   emit('select', friendId);
 };
+
+const isFriendEnabled = (friendId: string) =>
+    appSettings.value.friendSettings[friendId]?.enabled !== false;
+
+onMounted(() => {
+  void refresh();
+});
 
 watch(
     () => [props.scrollTargetId, filteredFriends.value.length],
@@ -113,13 +122,13 @@ onBeforeUnmount(() => {
           :class="selectedId === 'global' ? 'bg-vrc-highlight/15 border-vrc-highlight' : ''"
           @click="selectGlobal"
       >
-        <UserAvatar
+        <VrcAvatar
             v-if="currentUser"
             :user="currentUser"
             :size="40"
             fallback-class="font-semibold text-[10px]"
         />
-        <span class="flex-1 font-semibold min-w-0 truncate">{{ t('common.appSettings') }}</span>
+        <span class="flex-1 font-semibold min-w-0 truncate">{{ t('settings.sidebar.appSettings') }}</span>
       </VrcButton>
       <VrcInput
           :placeholder="t('friends.searchPlaceholder')"
@@ -145,7 +154,7 @@ onBeforeUnmount(() => {
               :class="selectedId === item.id ? 'outline-2 outline-vrc-highlight to-vrc-highlight/15' : 'outline-vrc-highlight/40 hover:outline-2'"
               @click="selectFriend(item.id)"
           >
-            <UserAvatar
+            <VrcAvatar
                 :user="item"
                 :size="24"
                 fallback-class="font-semibold text-[10px]"
@@ -158,8 +167,8 @@ onBeforeUnmount(() => {
                   class="text-red-600"
                   :size="14"
               />
-              <StatusBadge
-                  :friend="item"
+              <VrcStatus
+                  :user="item"
                   :show-label="false"
                   :size="12"
               />

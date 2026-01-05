@@ -1,8 +1,9 @@
-import {computed, ref, unref, watch, type ComputedRef, type Ref} from 'vue';
-import {Vibrant} from 'node-vibrant/browser';
 import type {Palette, Swatch} from '@vibrant/color';
+import {Vibrant} from 'node-vibrant/browser';
+import {computed, type ComputedRef, ref, type Ref, unref, watch} from 'vue';
 import {fetchIconDataUri} from '../invokes.ts';
 import {VRChat} from '../vrchat.ts';
+import {resolveAvatarUrl} from './useAvatarUrl';
 
 type RgbColor = [number, number, number];
 
@@ -11,7 +12,7 @@ type DominantSource = VRChat.EitherFriendOrCurrent | string | null | undefined;
 const resolveSourceUrl = (value: DominantSource) => {
   if (!value) return '';
   if (typeof value === 'string') return value;
-  return VRChat.resolveAvatarUrl(value);
+  return resolveAvatarUrl(value);
 };
 
 const swatchPreference: (keyof Palette)[] = [

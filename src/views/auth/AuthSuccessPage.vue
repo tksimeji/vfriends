@@ -48,10 +48,10 @@ const {t} = useI18n();
           :disabled="props.isSubmitting"
           @click="emit('close')"
       >
-        {{ t('common.close') }}
+        {{ t('auth.success.close') }}
       </button>
       <VrcButton :disabled="props.isSubmitting" @click="emit('logout')">
-        {{ t('common.logout') }}
+        {{ t('auth.success.logout') }}
       </VrcButton>
     </div>
   </section>

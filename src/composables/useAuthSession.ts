@@ -1,7 +1,7 @@
-import {computed, ref} from 'vue';
+import {computed, Ref, ref} from 'vue';
 import type {VRChat} from '../vrchat.ts';
 
-const currentUser = ref<VRChat.CurrentUser | null>(null);
+const currentUser: Ref<VRChat.CurrentUser | null> = ref(null);
 
 export const useAuthSession = () => {
   const isAuthenticated = computed(() => Boolean(currentUser.value));

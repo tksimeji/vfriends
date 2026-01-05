@@ -1,13 +1,4 @@
-import {saveNotificationSound} from '../invokes';
-import {t} from '../i18n';
-
-export const soundLabel = (value?: string | null) => {
-  const trimmed = value?.trim();
-  if (!trimmed) return t('common.default');
-  const normalized = trimmed.replace(/\\+/g, '\\');
-  const parts = normalized.split(/[/\\]/);
-  return parts[parts.length - 1] || trimmed;
-};
+import {saveNotificationSound} from './invokes.ts';
 
 export const resolveSoundPath = async (file: File | null) => {
   if (!file) return null;
