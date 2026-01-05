@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {computed, onMounted} from 'vue';
 import {useI18n} from 'vue-i18n';
+import LogoutConfirmButton from './LogoutConfirmButton.vue';
 import VrcAvatar from '../../components/VrcAvatar.vue';
 import VrcButton from '../../components/VrcButton.vue';
 import VrcFilePicker from '../../components/VrcFilePicker.vue';
@@ -78,15 +79,7 @@ onMounted(() => {
           </p>
         </div>
       </div>
-      <div class="flex justify-center">
-        <VrcButton
-            size="sm"
-            class="bg-red-500/10! border-red-500/40! text-red-200! hover:bg-red-500/20! hover:border-red-400! hover:text-red-100!"
-            @click="emit('logout')"
-        >
-          {{ t('settings.actions.logout') }}
-        </VrcButton>
-      </div>
+      <LogoutConfirmButton @confirm="emit('logout')"/>
     </SettingsCard>
 
     <SettingsCard :title="t('settings.languageTitle')">

@@ -48,6 +48,7 @@ const en = {
       emailHelp: 'Enter the code sent to your email.',
       recoveryHelp: 'Enter your recovery code.',
     },
+    sessionChecking: 'Checking session...',
     back: 'Back',
     submit: 'Submit',
     success: {
@@ -91,6 +92,11 @@ const en = {
     vrchatUserFallback: 'VRChat User',
     actions: {
       logout: 'Log out',
+      logoutCancel: 'Cancel',
+      logoutConfirm: 'Log out',
+      logoutConfirmDescription:
+        'This will sign you out from VRChat on this app.',
+      logoutConfirmTitle: 'Log out?',
     },
     languageTitle: 'Language',
     languageLabel: 'App language',

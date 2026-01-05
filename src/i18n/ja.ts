@@ -43,6 +43,7 @@ const ja = {
       emailHelp: 'メールで届いたコードを入力してください。',
       recoveryHelp: 'リカバリーコードを入力してください。',
     },
+    sessionChecking: 'セッションを確認しています...',
     back: '戻る',
     submit: '送信',
     success: {
@@ -86,6 +87,10 @@ const ja = {
     vrchatUserFallback: 'VRChat User',
     actions: {
       logout: 'ログアウトする',
+      logoutCancel: 'キャンセル',
+      logoutConfirm: 'ログアウト',
+      logoutConfirmDescription: 'このアプリからVRChatをログアウトします。',
+      logoutConfirmTitle: 'ログアウトしますか？',
     },
     languageTitle: '言語',
     languageLabel: 'アプリの言語',

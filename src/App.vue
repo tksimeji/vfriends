@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {computed, onBeforeUnmount, onMounted, ref} from 'vue';
+import {useI18n} from 'vue-i18n';
 import TitleBar from './components/title/TitleBar.vue';
 import './style.css';
 import AuthModal from './views/auth/AuthModal.vue';
@@ -10,10 +11,12 @@ import {useAuthSession} from './composables/useAuthSession';
 import {logout, restoreSession} from './invokes';
 
 const {isAuthenticated, setCurrentUser, clearCurrentUser} = useAuthSession();
+const {t} = useI18n();
 const searchQuery = ref('');
 const isSettingsOpen = ref(false);
 const hoverColor = ref<[number, number, number] | null>(null);
 const authListener = ref<UnlistenFn | null>(null);
+const isAuthChecking = ref(true);
 
 type AuthEvent =
   | { type: 'started'; action: 'credentials' | 'twoFactor' }
@@ -96,6 +99,8 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error(error);
+  } finally {
+    isAuthChecking.value = false;
   }
 });
 
@@ -122,7 +127,7 @@ onBeforeUnmount(() => {
     <Teleport to="#titlebar">
       <TitleBar
           v-model:query="searchQuery"
-          :hide-search-box="isSettingsOpen"
+          :hide-search-box="isSettingsOpen || !isAuthenticated || isAuthChecking"
           @open-settings="handleOpenSettings"
           @open-friend-settings="handleOpenFriendSettings"
       />
@@ -130,6 +135,7 @@ onBeforeUnmount(() => {
 
     <div class="flex flex-1 flex-col items-center min-h-0 overflow-hidden relative z-10">
       <FriendsView
+          v-if="isAuthenticated && !isAuthChecking"
           ref="friendsViewRef"
           :search-query="searchQuery"
           @hover-color="handleHoverColor"
@@ -139,7 +145,17 @@ onBeforeUnmount(() => {
       />
 
       <div
-          v-if="!isAuthenticated"
+          v-if="isAuthChecking"
+          class="absolute backdrop-blur-md bg-black/40 flex inset-0 items-center justify-center px-6 py-10"
+      >
+        <div class="flex flex-col gap-3 items-center text-vrc-text">
+          <div class="animate-spin border-2 border-t-vrc-highlight/80 border-vrc-highlight/30 h-8 rounded-full w-8"></div>
+          <p class="text-sm">{{ t('auth.sessionChecking') }}</p>
+        </div>
+      </div>
+
+      <div
+          v-else-if="!isAuthenticated"
           class="absolute backdrop-blur-md bg-black/40 flex inset-0 items-center justify-center px-6 py-10"
       >
         <AuthModal />
