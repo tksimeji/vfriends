@@ -1,3 +1,5 @@
+// @GeneratedFrom
+// vrchatapi 1.20.6 - https://crates.io/crates/vrchatapi/1.20.6
 export namespace VRChat {
   /**
    * Represents the `models::CurrentUser` structure of the VRChat API's rust SDK.
@@ -44,6 +46,52 @@ export namespace VRChat {
   };
 
   /**
+   * Represents the `models::World` structure of the VRChat API's rust SDK.
+   */
+  export type World = {
+    authorId: string;
+    authorName: string;
+    capacity: number;
+    createdAt: string;
+    defaultContentSettings?: InstanceContentSettings;
+    description: string;
+    favorites?: number;
+    featured: boolean;
+    heat: number;
+    id: string;
+    imageUrl: string;
+    labsPublicationDate: string;
+    name: string;
+    namespace?: string;
+    occupants?: number;
+    organization: string;
+    popularity: number;
+    previewYoutubeId?: string | null;
+    publicOccupants?: number;
+    recommendedCapacity: number;
+    releaseStatus: ReleaseStatus;
+    storeId?: string;
+    tags: string[];
+    thumbnailImageUrl: string;
+    updatedAt: string;
+    urlList?: string[];
+    version: number;
+    visits: number;
+  };
+
+  /**
+   * Represents the `models::InstanceContentSettings` structure of the VRChat API's rust SDK.
+   */
+  export type InstanceContentSettings = {
+    drones?: boolean;
+    emoji?: boolean;
+    pedestals?: boolean;
+    prints?: boolean;
+    props?: boolean;
+    stickers?: boolean;
+  }
+
+  /**
    * Represents the `model::DeveloperType` enum of the VRChat API's rust SDK.
    */
   export type DeveloperType = 'internal' | 'moderator' | 'none' | 'trusted';
@@ -52,6 +100,11 @@ export namespace VRChat {
    * Represents the `model::UserStatus` enum of the VRChat API's rust SDK.
    */
   export type UserStatus = 'active' | 'ask me' | 'busy' | 'join me' | 'offline';
+
+  /**
+   * Represents the `model::ReleaseStatus` enum of the VRChat API's rust SDK.
+   */
+  export type ReleaseStatus = 'all' | 'hidden' | 'private' | 'public';
 
   export type EitherFriendOrCurrent = LimitedUserFriend | CurrentUser;
 }

@@ -73,6 +73,12 @@ const ja = {
     updating: '更新中...',
     searchPlaceholder: 'フレンド検索...',
     lastOnline: '最終オンライン：{value}',
+    location: {
+      private: 'プライベート',
+      traveling: '移動中',
+      offline: 'オフライン',
+      web: 'Web',
+    },
   },
   settings: {
     noSettings: 'ここに表示できる設定がありません。',

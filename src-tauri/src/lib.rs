@@ -48,6 +48,7 @@ pub fn run() {
             commands::restore_session,
             commands::logout,
             commands::fetch_friends,
+            commands::fetch_world,
             commands::fetch_friend_settings,
             commands::set_friend_settings,
             commands::fetch_app_settings,

@@ -19,6 +19,13 @@ const STATUS_PRIORITY: Record<VRChat.UserStatus, number> = {
   'offline': 4,
 };
 
+const HIDDEN_LOCATIONS = new Set(['offline', 'private', 'traveling', 'web']);
+
+const hasKnownLocation = (friend: VRChat.LimitedUserFriend) => {
+  const location = friend.location?.toLowerCase();
+  return Boolean(location && !HIDDEN_LOCATIONS.has(location));
+};
+
 const compareFriends = (
   first: VRChat.LimitedUserFriend,
   second: VRChat.LimitedUserFriend,
@@ -30,6 +37,9 @@ const compareFriends = (
     ? Number.POSITIVE_INFINITY
     : STATUS_PRIORITY[second.status] ?? Number.POSITIVE_INFINITY;
   if (rankA !== rankB) return rankA - rankB;
+  const locationA = hasKnownLocation(first);
+  const locationB = hasKnownLocation(second);
+  if (locationA !== locationB) return locationA ? -1 : 1;
   return first.displayName
     .toLowerCase()
     .localeCompare(second.displayName.toLowerCase());

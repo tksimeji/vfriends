@@ -2,8 +2,11 @@ import {invoke} from '@tauri-apps/api/core';
 import {AppSettings, FriendSettings} from './types.ts';
 import type {VRChat} from './vrchat.ts';
 
-export const fetchFriends = async () =>
+export const fetchFriends = async (): Promise<VRChat.LimitedUserFriend[]> =>
   invoke<VRChat.LimitedUserFriend[]>('fetch_friends');
+
+export const fetchWorld = async (worldId: string): Promise<VRChat.World> =>
+  invoke<VRChat.World>('fetch_world', {worldId});
 
 export const fetchIconDataUri = async (url: string) => {
   if (!url) return null;

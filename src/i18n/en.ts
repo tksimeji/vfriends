@@ -78,6 +78,12 @@ const en = {
     updating: 'Updating...',
     searchPlaceholder: 'Search friends...',
     lastOnline: 'Last online: {value}',
+    location: {
+      private: 'Private',
+      traveling: 'Traveling',
+      offline: 'Offline',
+      web: 'Web',
+    },
   },
   settings: {
     noSettings: 'No config available.',

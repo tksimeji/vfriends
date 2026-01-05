@@ -2,16 +2,30 @@ use crate::auth::AuthState;
 use crate::config::{AppSettings, FriendSettings, SettingsStore};
 use crate::vrchat_utils::AppResult;
 use crate::{auth, notifier, vrchat_utils};
+use serde::Deserialize;
 use std::collections::HashMap;
 use tauri::{AppHandle, Manager, State};
+use vrchatapi::apis::worlds_api;
+use vrchatapi::models;
 use vrchatapi::models::{CurrentUser, LimitedUserFriend};
-use serde::Deserialize;
 
 #[tauri::command]
 pub async fn fetch_friends(
     state: State<'_, AuthState>,
 ) -> AppResult<Vec<LimitedUserFriend>> {
     vrchat_utils::fetch_all_friends(state.inner()).await
+}
+
+#[tauri::command]
+pub async fn fetch_world(
+    state: State<'_, AuthState>,
+    world_id: String,
+) -> AppResult<models::World> {
+    let config = state.with_session(|session| session.config.clone())?;
+    match worlds_api::get_world(&config, &world_id).await {
+        Ok(world) => Ok(world),
+        Err(err) => Err(err.to_string()),
+    }
 }
 
 #[tauri::command]
