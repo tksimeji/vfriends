@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed} from 'vue';
+import {computed, ref} from 'vue';
 import {useAuthSession} from '../../composables/useAuthSession';
 import AccountButton from './AccountButton.vue';
 import SearchBox from './SearchBox.vue';
@@ -15,11 +15,20 @@ const emit = defineEmits<{
   (e: 'open-friend-settings', friendId: string): void;
 }>();
 
+const searchBoxRef = ref<{ focus: () => void } | null>(null);
 const {currentUser} = useAuthSession();
 
 const openSettings = () => {
   emit('open-settings');
 };
+
+const focusSearch = () => {
+  searchBoxRef.value?.focus();
+};
+
+defineExpose({
+  focusSearch,
+});
 </script>
 
 <template>
@@ -39,6 +48,7 @@ const openSettings = () => {
     <div class="flex flex-1 justify-center min-w-0" :data-tauri-drag-region="true">
       <SearchBox
           v-if="Boolean(currentUser) && !props.hideSearchBox"
+          ref="searchBoxRef"
           :model-value="props.query"
           @update:model-value="(value) => emit('update:query', value)"
           @select="(friendId) => emit('open-friend-settings', friendId)"

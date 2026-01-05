@@ -22,6 +22,7 @@ const settingsTarget = ref<'global' | string>('global');
 const scrollTargetId = ref<string | null>(null);
 const isPanelAnimating = ref(false);
 const panelScrollRef = ref<HTMLElement | null>(null);
+const sidebarRef = ref<{ focusSearch: () => void } | null>(null);
 
 const activeFriendId = computed(() =>
     settingsTarget.value === 'global' ? null : settingsTarget.value,
@@ -96,6 +97,7 @@ defineExpose({
   openGlobal,
   openFriend,
   close,
+  focusSidebarSearch: () => sidebarRef.value?.focusSearch(),
 });
 
 const handlePanelEnter = () => {
@@ -126,8 +128,9 @@ const handlePanelAfterLeave = () => {
       teleport-to="body"
   >
     <div
-        class="bg-vrc-background border-2 border-vrc-highlight/80 flex pointer-events-auto w-full md:h-[calc(90vh-3rem)] md:max-w-6xl md:rounded-md md:w-[96vw] md:mx-auto">
+        class="bg-vrc-background border border-vrc-highlight/80 flex pointer-events-auto w-full md:h-[calc(90vh-3rem)] md:max-w-6xl md:rounded-md md:w-[96vw] md:mx-auto">
       <SettingsSidebar
+          ref="sidebarRef"
           :friends="props.friends"
           :selected-id="settingsTarget"
           :scroll-target-id="scrollTargetId"

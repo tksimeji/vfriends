@@ -16,6 +16,10 @@ type RecycleScrollerHandle = {
   scrollToPosition: (position: number) => void;
 };
 
+type VrcInputHandle = {
+  focus: () => void;
+};
+
 const props = defineProps<{
   friends: VRChat.LimitedUserFriend[];
   selectedId: string;
@@ -34,6 +38,7 @@ const {appSettings, refresh} = useAppSettings();
 const scrollerRef = ref<RecycleScrollerHandle | null>(null);
 const isAlive = ref(true);
 const searchQuery = ref('');
+const searchInputRef = ref<VrcInputHandle | null>(null);
 
 const filteredFriends = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
@@ -71,6 +76,14 @@ const selectFriend = (friendId: string) => {
 
 const isFriendEnabled = (friendId: string) =>
     appSettings.value.friendSettings[friendId]?.enabled !== false;
+
+const focusSearch = () => {
+  searchInputRef.value?.focus();
+};
+
+defineExpose({
+  focusSearch,
+});
 
 onMounted(() => {
   void refresh();
@@ -133,6 +146,7 @@ onBeforeUnmount(() => {
       <VrcInput
           :placeholder="t('friends.searchPlaceholder')"
           :value="searchQuery"
+          ref="searchInputRef"
           @input="searchQuery = ($event.target as HTMLInputElement).value"
       >
         <SearchIcon slot="" :size="16"/>

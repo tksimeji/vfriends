@@ -11,6 +11,14 @@ app.use(vfm);
 app.use(i18n);
 app.mount('#app');
 
+const disableDefaultContextMenu = () => {
+  document.addEventListener('contextmenu', (event) => {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('[data-allow-context-menu="true"]')) return;
+    event.preventDefault();
+  });
+};
+
 const setupTitlebarInset = () => {
   const controls = document.getElementById('tauri-window-controls');
   if (!controls) return;
@@ -37,3 +45,5 @@ if (document.readyState === 'loading') {
 } else {
   setupTitlebarInset();
 }
+
+disableDefaultContextMenu();

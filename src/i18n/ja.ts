@@ -80,6 +80,13 @@ const ja = {
       offline: 'オフライン',
       web: 'Web',
     },
+    contextMenu: {
+      openSettings: '設定を開く',
+      disableNotifications: '通知を無効にする',
+      enableNotifications: '通知を有効にする',
+      openProfile: 'VRChatプロフィールを開く',
+      openInstance: 'インスタンスを開く',
+    },
   },
   settings: {
     noSettings: 'ここに表示できる設定がありません。',

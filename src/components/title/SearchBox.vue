@@ -5,7 +5,6 @@ import {useI18n} from 'vue-i18n';
 import {useFriends} from '../../composables/useFriends';
 import type {VRChat} from '../../vrchat.ts';
 import VrcAvatar from '../VrcAvatar.vue';
-import SearchStatusBar from './SearchStatusBar.vue';
 
 const MAX_VISIBLE = 10;
 
@@ -126,6 +125,10 @@ const focusInput = async () => {
   inputRef.value?.focus();
 };
 
+defineExpose({
+  focus: focusInput,
+});
+
 onBeforeUpdate(() => {
   suggestionRefs.value = [];
 });
@@ -166,8 +169,7 @@ onMounted(() => {
       @focusout="handleFocusOut"
   >
     <div
-        class="bg-vrc-background-secondary flex gap-2 items-center min-w-0 px-2 relative rounded-md w-full
-         focus-within:ring-1 focus-within:ring-vrc-highlight/40 focus-within:ring-inset"
+        class="bg-vrc-background-secondary flex gap-2 items-center min-w-0 px-2 relative rounded-md w-full"
         data-tauri-drag-region="false"
     >
       <input
@@ -195,10 +197,9 @@ onMounted(() => {
       >
         <SearchIcon class="text-vrc-text/50" :size="14"/>
       </button>
-      <SearchStatusBar
-          :focused="isFocused"
-          :friends="sortedItems"
-          :query="searchQuery"
+      <div
+          class="absolute border-b-2 border-transparent bottom-0 inset-x-0 transition-colors"
+          :class="isFocused ? 'border-b-vrc-highlight/70' : ''"
       />
     </div>
 

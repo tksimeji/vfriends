@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
+import {useAuthSession} from '../../composables/useAuthSession';
 import {useFriends} from '../../composables/useFriends';
-import type {VRChat} from '../../vrchat.ts';
 import SettingsModal from '../settings/SettingsModal.vue';
 import FriendsList from './FriendsList.vue';
 import type {FriendsStatusMessage} from './types';
-import {useAuthSession} from '../../composables/useAuthSession';
 
 const {
   sortedItems,
@@ -41,23 +40,15 @@ type SettingsModalHandle = {
   openGlobal: () => void;
   openFriend: (friendId: string) => void;
   close: () => void;
+  focusSidebarSearch: () => void;
 };
 
 const settingsModalRef = ref<SettingsModalHandle | null>(null);
 const searchActive = computed(() => props.searchQuery.trim().length > 0);
-const totalCount = computed(() => sortedItems.value.length);
 const filteredCount = computed(() => filteredFriends.value.length);
 const {t} = useI18n();
 const {isAuthenticated} = useAuthSession();
 const isAuthed = computed(() => Boolean(isAuthenticated.value));
-const countLabel = computed(() =>
-  searchActive.value
-    ? t('friends.countFiltered', {
-      filtered: filteredCount.value,
-      total: totalCount.value,
-    })
-    : t('friends.count', {count: totalCount.value}),
-);
 const statusMessage = computed<FriendsStatusMessage | null>(() => {
   if (errorMessage.value) {
     return {
@@ -124,10 +115,15 @@ const closeSettings = () => {
   settingsModalRef.value?.close();
 };
 
+const focusSettingsSearch = () => {
+  settingsModalRef.value?.focusSidebarSearch();
+};
+
 defineExpose({
   openSettings,
   openSettingsForFriend,
   closeSettings,
+  focusSettingsSearch,
 });
 </script>
 
@@ -140,22 +136,6 @@ defineExpose({
         @close="emit('settings-closed')"
         @logout="emit('logout')"
     />
-
-    <div class="border-b border-vrc-highlight/15 flex flex-wrap gap-3 items-center justify-between mb-2 py-2 text-vrc-text/60 text-xs">
-      <p
-          v-if="statusMessage"
-          class="text-sm"
-          :class="statusMessage.tone === 'error' ? 'text-red-300' : 'text-vrc-text/70'"
-      >
-        {{ statusMessage.text }}
-      </p>
-      <div class="flex gap-3 items-center">
-        <span>{{ countLabel }}</span>
-        <span class="hiddensm:inline">{{ t('friends.clickCardHint') }}</span>
-        <span v-if="isLoading" class="text-vrc-highlight/70">{{ t('friends.updating') }}</span>
-      </div>
-    </div>
-
     <FriendsList
         v-if="showList"
         :friends="filteredFriends"

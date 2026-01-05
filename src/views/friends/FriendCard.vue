@@ -97,6 +97,10 @@ const emitHover = (active: boolean) => {
   emit('hover', {id: props.friend.id, rgb: rgb.value, active});
 };
 
+const openSettings = () => {
+  emit('open-settings');
+};
+
 const handleMouseEnter = () => {
   isHovered.value = true;
   emitHover(true);
@@ -129,7 +133,7 @@ onMounted(() => {
   <article
       class="bg-vrc-background-secondary border-3 border-vrc-background-secondary cursor-pointer duration-150 flex flex-col friend-card group overflow-hidden rounded-2xl select-none transition-colors"
       :style="cardStyle"
-      @click="emit('open-settings')"
+      @click="openSettings"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
   >

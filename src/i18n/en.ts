@@ -85,6 +85,13 @@ const en = {
       offline: 'Offline',
       web: 'Web',
     },
+    contextMenu: {
+      openSettings: 'Open settings',
+      disableNotifications: 'Disable notifications',
+      enableNotifications: 'Enable notifications',
+      openProfile: 'Open VRChat profile',
+      openInstance: 'Open instance in VRChat',
+    },
   },
   settings: {
     noSettings: 'No config available.',

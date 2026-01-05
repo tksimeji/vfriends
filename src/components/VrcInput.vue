@@ -19,6 +19,7 @@ const attrs = useAttrs();
 const {t} = useI18n();
 
 const showPassword = ref(false);
+const inputRef = ref<HTMLInputElement | null>(null);
 
 const isDisabled = computed(() => props.disabled || Boolean(attrs.disabled));
 const isPassword = computed(() => props.type === 'password');
@@ -27,6 +28,14 @@ const inputType = computed(() => isPassword.value ? (showPassword.value ? 'text'
 const togglePassword = () => {
   showPassword.value = !showPassword.value;
 };
+
+const focus = () => {
+  inputRef.value?.focus();
+};
+
+defineExpose({
+  focus,
+});
 </script>
 
 <template>
@@ -44,6 +53,7 @@ const togglePassword = () => {
 
       <input
           v-bind="attrs"
+          ref="inputRef"
           class="bg-transparent grow min-w-0 outline-none text-sm placeholder:text-vrc-subtext"
           :class="isDisabled ? 'cursor-not-allowed' : ''"
           :disabled="isDisabled"
