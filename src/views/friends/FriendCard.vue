@@ -171,7 +171,7 @@ onMounted(() => {
               :size="12"
           />
           <div class="flex gap-2 items-center min-w-0">
-            <MapPinIcon class="text-vrc-highlight/70" :size="14"/>
+            <MapPinIcon class="shrink-0 text-vrc-highlight/70" :size="14"/>
             <span class="font-semibold text-sm text-vrc-text/90 truncate">
               {{ locationLabel }}
             </span>
