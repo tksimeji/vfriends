@@ -3,7 +3,9 @@ import {SearchIcon, XIcon} from 'lucide-vue-next';
 import {computed, nextTick, onBeforeUpdate, onMounted, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
 import {useFriends} from '../../composables/useFriends';
+import type {VRChat} from '../../vrchat.ts';
 import VrcAvatar from '../VrcAvatar.vue';
+import SearchStatusBar from './SearchStatusBar.vue';
 
 const MAX_VISIBLE = 10;
 
@@ -25,6 +27,7 @@ const suggestionRefs = ref<HTMLElement[]>([]);
 const activeSuggestion = ref(-1);
 const hoveredSuggestion = ref(-1);
 const isOpen = ref(false);
+const isFocused = ref(false);
 
 const searchQuery = computed(() => props.modelValue.trim());
 const normalizedQuery = computed(() => searchQuery.value.toLowerCase());
@@ -97,6 +100,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 };
 
 const handleFocusIn = () => {
+  isFocused.value = true;
   if (searchQuery.value.length > 0) {
     isOpen.value = true;
   }
@@ -107,10 +111,12 @@ const handleFocusOut = () => {
     const root = rootRef.value;
     if (!root) {
       isOpen.value = false;
+      isFocused.value = false;
       return;
     }
     if (!root.contains(document.activeElement)) {
       isOpen.value = false;
+      isFocused.value = false;
     }
   });
 };
@@ -160,16 +166,16 @@ onMounted(() => {
       @focusout="handleFocusOut"
   >
     <div
-        class="bg-vrc-background-secondary border-b border-b-transparent flex gap-2 items-center min-w-0 px-2 rounded-md w-full
-         focus:border-b focus-within:border-b-vrc-highlight"
+        class="bg-vrc-background-secondary flex gap-2 items-center min-w-0 px-2 relative rounded-md w-full
+         focus-within:ring-1 focus-within:ring-vrc-highlight/40 focus-within:ring-inset"
         data-tauri-drag-region="false"
     >
       <input
-          :value="modelValue"
           ref="inputRef"
           type="text"
           class="grow outline-none py-2 text-vrc-text text-xs"
-          data-tauri-drag-region="false"
+          :data-tauri-drag-region="false"
+          :value="modelValue"
           :placeholder="t('titleBar.search')"
           @input="handleInput"
           @keydown="handleKeydown"
@@ -189,6 +195,11 @@ onMounted(() => {
       >
         <SearchIcon class="text-vrc-text/50" :size="14"/>
       </button>
+      <SearchStatusBar
+          :focused="isFocused"
+          :friends="sortedItems"
+          :query="searchQuery"
+      />
     </div>
 
     <Transition name="suggestions-slide">
@@ -241,4 +252,5 @@ onMounted(() => {
   opacity: 1;
   transform: translateY(0) scale(1);
 }
+
 </style>
