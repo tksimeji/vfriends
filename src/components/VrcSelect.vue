@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition} from '@headlessui/vue';
+import {Listbox, ListboxButton, ListboxOption, ListboxOptions} from '@headlessui/vue';
 import {CheckIcon, ChevronDownIcon} from 'lucide-vue-next';
 import {computed} from 'vue';
 

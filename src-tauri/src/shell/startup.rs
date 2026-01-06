@@ -6,6 +6,11 @@ use tauri_plugin_autostart::ManagerExt as AutostartManagerExt;
 use crate::auth;
 
 pub fn init(app: &AppHandle) -> tauri::Result<()> {
+    if cfg!(debug_assertions) {
+        let _ = app.autolaunch().disable();
+        return Ok(());
+    }
+
     if is_autostart() {
         hide_main_window(app);
     }

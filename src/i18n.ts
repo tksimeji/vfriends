@@ -32,4 +32,4 @@ export const setLocale = (locale: LocaleKey) => {
 };
 
 export const t = (key: string, params?: Record<string, unknown>) =>
-  i18n.global.t(key, params);
+  params ? i18n.global.t(key, params) : i18n.global.t(key);

@@ -4,29 +4,13 @@ import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
 import TitleBar from './components/title/TitleBar.vue';
 import './style.css';
-import AuthModal from './views/auth/AuthModal.vue';
-import FriendsView from './views/friends/FriendsView.vue';
-import 'vue-final-modal/style.css';
-import {useAuthSession} from './composables/useAuthSession';
+import {type AuthEvent, useAuthSession} from './composables/useAuthSession';
 import {useDominantColor} from './composables/useDominantColor';
 import {logout, restoreSession} from './invokes';
-
-const {currentUser, isAuthenticated, setCurrentUser, clearCurrentUser} = useAuthSession();
-const {t} = useI18n();
-const {rgb: currentUserRgb} = useDominantColor(currentUser);
-const searchQuery = ref('');
-const isSettingsOpen = ref(false);
-const hoverColor = ref<[number, number, number] | null>(null);
-const authListener = ref<UnlistenFn | null>(null);
-const isAuthChecking = ref(true);
-const titleBarRef = ref<{ focusSearch: () => void } | null>(null);
-
-type AuthEvent =
-  | { type: 'started'; action: 'credentials' | 'twoFactor' }
-  | { type: 'twoFactorRequired'; methods?: string[]; message?: string }
-  | { type: 'success'; user?: VRChat.CurrentUser }
-  | { type: 'failure'; message: string; code?: string }
-  | { type: 'loggedOut' };
+import LoginWelcomeOverlay from './views/auth/LoginWelcomeOverlay.vue';
+import FriendsView from './views/friends/FriendsView.vue';
+import 'vue-final-modal/style.css';
+import Oobe from './views/oobe/Oobe.vue';
 
 type FriendsViewHandle = {
   openSettings: () => void;
@@ -35,6 +19,24 @@ type FriendsViewHandle = {
   focusSettingsSearch: () => void;
 };
 
+const {
+  currentUser,
+  isAuthenticated,
+  setCurrentUser,
+  clearCurrentUser,
+  applyAuthEvent,
+  isLoginCelebrating
+} = useAuthSession();
+const {rgb: currentUserRgb} = useDominantColor(currentUser);
+const {t} = useI18n();
+
+const searchQuery = ref('');
+const isSettingsOpen = ref(false);
+const hoverColor = ref<[number, number, number] | null>(null);
+const authListener = ref<UnlistenFn | null>(null);
+const isAuthChecking = ref(true);
+const titleBarRef = ref<{ focusSearch: () => void } | null>(null);
+const authOverlayMode = ref<'oobe' | 'auth' | null>(null);
 const friendsViewRef = ref<FriendsViewHandle | null>(null);
 
 const handleLogout = () => {
@@ -70,14 +72,36 @@ const hoverOverlayStyle = computed(() => {
     backgroundImage: `linear-gradient(135deg, ${accent}, ${base})`,
   };
 });
+const uiState = computed(() => {
+  const authed = isAuthenticated.value;
+  const authChecking = isAuthChecking.value;
+  const overlayMode = authOverlayMode.value;
+  const loginCelebrating = isLoginCelebrating.value;
+  return {
+    authChecking,
+    authed,
+    hideSearchBox: isSettingsOpen.value || !authed || authChecking || loginCelebrating,
+    overlayMode,
+    showAuthCheckingOverlay: authChecking,
+    showFriends: authed && !authChecking && !loginCelebrating,
+    showOverlayDim: overlayMode !== 'oobe' && (authChecking || overlayMode !== null),
+    showOverlayEffects: authChecking || overlayMode !== null,
+    useAuthBackground: !authed,
+    showLoginWelcome: loginCelebrating,
+  };
+});
+
 const updateTitleBarBackground = () => {
   const titleBar = document.getElementById('titlebar');
   if (!titleBar) return;
-  if (isSettingsOpen.value) {
-    titleBar.classList.add('bg-vrc-background');
-  } else {
-    titleBar.classList.remove('bg-vrc-background');
-  }
+  titleBar.classList.toggle('bg-vrc-background', isSettingsOpen.value);
+  titleBar.classList.toggle('auth-background', uiState.value.useAuthBackground);
+  titleBar.classList.toggle('backdrop-blur-md', uiState.value.showOverlayEffects);
+  titleBar.classList.toggle('bg-black/40', uiState.value.showOverlayDim);
+};
+
+const handleAuthOverlayMode = (mode: 'oobe' | 'auth' | null) => {
+  authOverlayMode.value = mode;
 };
 
 const handleLogoutFromTitle = async () => {
@@ -92,16 +116,6 @@ const handleLogoutFromTitle = async () => {
   }
 };
 
-const handleAuthEvent = (event: AuthEvent) => {
-  if (event.type === 'success') {
-    if (event.user) setCurrentUser(event.user);
-    return;
-  }
-  if (event.type === 'loggedOut') {
-    handleLogout();
-  }
-};
-
 const handleSearchShortcut = (event: KeyboardEvent) => {
   const isModifier = event.ctrlKey || event.metaKey;
   if (!isModifier) return;
@@ -112,13 +126,16 @@ const handleSearchShortcut = (event: KeyboardEvent) => {
     friendsViewRef.value?.focusSettingsSearch();
     return;
   }
-  if (!isAuthenticated.value || isAuthChecking.value) return;
+  if (!uiState.value.authed || uiState.value.authChecking) return;
   titleBarRef.value?.focusSearch();
 };
 
 onMounted(async () => {
   authListener.value = await listen<AuthEvent>('vrc:auth', (event) => {
-    handleAuthEvent(event.payload);
+    applyAuthEvent(event.payload);
+    if (event.payload.type === 'loggedOut') {
+      handleLogout();
+    }
   });
   window.addEventListener('keydown', handleSearchShortcut);
   updateTitleBarBackground();
@@ -141,7 +158,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleSearchShortcut);
 });
 
-watch(isSettingsOpen, () => {
+watch(uiState, () => {
   updateTitleBarBackground();
 });
 </script>
@@ -150,7 +167,7 @@ watch(isSettingsOpen, () => {
   <main
       id="a"
       class="bg-vrc-background flex flex-col h-full overflow-hidden pt-12 relative w-full"
-      :class="isAuthenticated ? '' : 'auth-background'"
+      :class="uiState.useAuthBackground ? 'auth-background' : ''"
   >
     <Transition name="hover-overlay">
       <div
@@ -164,15 +181,15 @@ watch(isSettingsOpen, () => {
       <TitleBar
           ref="titleBarRef"
           v-model:query="searchQuery"
-          :hide-search-box="isSettingsOpen || !isAuthenticated || isAuthChecking"
+          :hide-search-box="uiState.hideSearchBox"
           @open-settings="handleOpenSettings"
           @open-friend-settings="handleOpenFriendSettings"
       />
     </Teleport>
 
-    <div class="flex flex-1 flex-col items-center min-h-0 mt-4 overflow-hidden relative z-10">
+    <div class="flex flex-1 flex-col items-center min-h-0 overflow-hidden relative z-10">
       <FriendsView
-          v-if="isAuthenticated && !isAuthChecking"
+          v-if="uiState.showFriends"
           ref="friendsViewRef"
           :search-query="searchQuery"
           @hover-color="handleHoverColor"
@@ -181,29 +198,36 @@ watch(isSettingsOpen, () => {
           @logout="handleLogoutFromTitle"
       />
 
-      <div
-          v-if="isAuthChecking"
-          class="absolute backdrop-blur-md bg-black/40 flex inset-0 items-center justify-center px-6 py-10"
-      >
-        <div class="flex flex-col gap-3 items-center text-vrc-text">
-          <div class="animate-spin border-2 border-t-vrc-highlight/80 border-vrc-highlight/30 h-8 rounded-full w-8"></div>
-          <p class="text-sm">{{ t('auth.sessionChecking') }}</p>
+      <Teleport to="body">
+        <div
+            v-if="uiState.showAuthCheckingOverlay"
+            class="backdrop-blur-md fixed flex inset-0 items-center justify-center pointer-events-none px-6 py-10 z-[50]"
+        >
+          <div class="flex flex-col gap-3 items-center pointer-events-auto text-vrc-text">
+            <div
+                class="animate-spin border-2 border-t-vrc-highlight/80 border-vrc-highlight/30 h-8 rounded-full w-8"></div>
+            <p class="text-sm">{{ t('auth.sessionChecking') }}</p>
+          </div>
         </div>
-      </div>
+      </Teleport>
 
-      <div
-          v-else-if="!isAuthenticated"
-          class="absolute backdrop-blur-md bg-black/40 flex inset-0 items-center justify-center px-6 py-10"
-      >
-        <AuthModal />
-      </div>
+      <LoginWelcomeOverlay :show="uiState.showLoginWelcome" />
+
+      <Oobe
+          :is-auth-checking="isAuthChecking"
+          @overlay-mode="handleAuthOverlayMode"
+      />
     </div>
   </main>
 </template>
 
 <style scoped>
-.auth-background {
-  background-image: url('./assets/LoginBackground.png');
+:global(.auth-background) {
+  background-image: radial-gradient(circle at 18% 18%, rgba(255, 190, 214, 0.7), transparent 45%),
+  radial-gradient(circle at 82% 20%, rgba(255, 178, 130, 0.6), transparent 45%),
+  radial-gradient(circle at 20% 82%, rgba(255, 160, 200, 0.5), transparent 50%),
+  radial-gradient(circle at 85% 78%, rgba(255, 140, 96, 0.45), transparent 50%),
+  linear-gradient(135deg, rgb(255, 236, 246), rgb(255, 206, 186), rgb(255, 178, 150));
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
@@ -223,4 +247,5 @@ watch(isSettingsOpen, () => {
 .hover-overlay-leave-from {
   opacity: 1;
 }
+
 </style>

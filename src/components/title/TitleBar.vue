@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, ref} from 'vue';
+import {ref} from 'vue';
 import {useAuthSession} from '../../composables/useAuthSession';
 import AccountButton from './AccountButton.vue';
 import SearchBox from './SearchBox.vue';

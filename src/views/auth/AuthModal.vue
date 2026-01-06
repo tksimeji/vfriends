@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import {useI18n} from 'vue-i18n';
+import {useAuthFlow} from '../../composables/useAuthFlow.ts';
+import Auth2FaPage from './Auth2FaPage.vue';
 import AuthCredentialsPage from './AuthCredentialsPage.vue';
 import AuthSuccessPage from './AuthSuccessPage.vue';
-import Auth2FaPage from './Auth2FaPage.vue';
-import {useAuthFlow} from '../../composables/useAuthFlow.ts';
-import {useI18n} from 'vue-i18n';
 
 const {
   username,
@@ -28,7 +28,7 @@ const {t} = useI18n();
 
 <template>
   <div
-      class="backdrop-blur-2xl bg-vrc-background/40 h-[min(90vh,520px)] overflow-y-auto p-8 ring-1 ring-white/10 rounded-4xl shadow-2xl w-[min(90vw,520px)]"
+      class="backdrop-blur-sm bg-vrc-background/80 h-[min(90vh,520px)] overflow-y-auto p-8 ring-1 ring-white/10 rounded-xl shadow-2xl w-[min(90vw,520px)]"
   >
     <AuthCredentialsPage
         v-if="currentStep === 'credentials'"
@@ -64,4 +64,3 @@ const {t} = useI18n();
 
 <style scoped>
 </style>
-

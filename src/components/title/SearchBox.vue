@@ -3,7 +3,6 @@ import {SearchIcon, XIcon} from 'lucide-vue-next';
 import {computed, nextTick, onBeforeUpdate, onMounted, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
 import {useFriends} from '../../composables/useFriends';
-import type {VRChat} from '../../vrchat.ts';
 import VrcAvatar from '../VrcAvatar.vue';
 
 const MAX_VISIBLE = 10;

@@ -60,6 +60,13 @@ const ja = {
       selectTwoFactor: '2FA方式を選択してください。',
       verifyFailed: '2FAの検証に失敗しました。もう一度お試しください。',
     },
+    welcomeTitle: 'ようこそ！',
+    welcomeSubtitle: '{name} さん、ログインできました。',
+  },
+  oobe: {
+    thanksTitle: 'ご購入ありがとうございます！',
+    thanksDescription: '気に入っていただけたらうれしいです！Big Love❤',
+    actionStart: 'はじめる',
   },
   friends: {
     errors: {

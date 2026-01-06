@@ -128,7 +128,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col max-w-6xl min-h-0 mx-auto px-4 relative w-full">
+  <div class="flex flex-1 flex-col max-w-6xl min-h-0 mx-auto px-4 pt-4 relative w-full">
     <SettingsModal
         ref="settingsModalRef"
         :friends="sortedItems"

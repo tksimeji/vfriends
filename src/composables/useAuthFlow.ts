@@ -3,7 +3,7 @@ import {computed, onBeforeUnmount, onMounted, reactive, shallowRef, toRefs} from
 import {t} from '../i18n';
 import {beginAuth, restoreSession, verifyTwoFactor} from '../invokes';
 import {VRChat} from '../vrchat.ts';
-import {useAuthSession} from './useAuthSession';
+import {useAuthSession, type AuthAction, type AuthEvent} from './useAuthSession';
 
 const KNOWN_2FA_METHODS: TwoFactorMethod[] = ['totp', 'emailOtp', 'otp'];
 
@@ -13,8 +13,6 @@ export type UseLoginFlowOptions = {
 
 export type LoginState = 'credentials' | 'twoFactor' | 'success';
 export type TwoFactorMethod = 'totp' | 'emailOtp' | 'otp';
-export type AuthAction = 'credentials' | 'twoFactor';
-
 type AuthState = {
   username: string;
   password: string;
@@ -29,13 +27,6 @@ type AuthState = {
   activeAction: AuthAction | null;
 };
 
-type AuthEvent =
-  | { type: 'started'; action: AuthAction }
-  | { type: 'twoFactorRequired'; methods?: string[]; message?: string }
-  | { type: 'success'; user?: VRChat.CurrentUser }
-  | { type: 'failure'; message: string; code?: string }
-  | { type: 'loggedOut' };
-
 const methodSort = (a: TwoFactorMethod, b: TwoFactorMethod) =>
   KNOWN_2FA_METHODS.indexOf(a) - KNOWN_2FA_METHODS.indexOf(b);
 
@@ -47,7 +38,7 @@ const normalizeMethods = (methods: string[] | undefined) => {
 };
 
 export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
-  const {setCurrentUser, clearCurrentUser} = useAuthSession();
+  const {setCurrentUser, clearCurrentUser, startLoginCelebration} = useAuthSession();
   const state = reactive<AuthState>({
     username: '',
     password: '',
@@ -136,6 +127,7 @@ export const useAuthFlow = (options: UseLoginFlowOptions = {}) => {
         state.twoFactorCode = '';
         state.activeAction = null;
         setCurrentUser(state.authedUser);
+        startLoginCelebration();
         options.onLoginSuccess?.(state.authedUser);
         return;
       }

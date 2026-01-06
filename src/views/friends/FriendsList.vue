@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import {computed, ref} from 'vue';
 import {DynamicScroller, DynamicScrollerItem} from 'vue-virtual-scroller';
-import FriendCard from './FriendCard.vue';
 import {useFriendGrid} from '../../composables/useFriendGrid';
 import type {VRChat} from '../../vrchat.ts';
+import FriendCard from './FriendCard.vue';
 
 const props = defineProps<{
   friends: VRChat.LimitedUserFriend[];
@@ -66,4 +66,3 @@ const handleHover = (payload: {
     </DynamicScroller>
   </div>
 </template>
-

@@ -65,6 +65,13 @@ const en = {
       selectTwoFactor: 'Select a 2FA method.',
       verifyFailed: 'Failed to verify 2FA. Please try again.',
     },
+    welcomeTitle: 'Welcome!',
+    welcomeSubtitle: 'Glad to see you, {name}.',
+  },
+  oobe: {
+    thanksTitle: 'Thank you for your purchase!',
+    thanksDescription: 'I hope you like it! Big Love❤',
+    actionStart: 'Start',
   },
   friends: {
     errors: {
