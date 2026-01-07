@@ -103,7 +103,7 @@ onMounted(() => {
           :placeholder="t('settings.notifications.messagePlaceholder')"
           @input="handleMessageInput"
       />
-      <p class="text-vrc-text text-xs">{{ t('settings.notifications.preview', {text: previewText}) }}</p>
+      <p class="text-vrc-text text-xs">{{ t('settings.friend.messageHelper', {text: previewText}) }}</p>
 
       <VrcFilePicker
           :label="t('settings.notifications.soundLabel')"

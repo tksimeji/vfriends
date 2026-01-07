@@ -22,10 +22,15 @@ const TEXT_SHIELD_LAYER = 'linear-gradient(180deg, rgba(12, 14, 20, 0.35), rgba(
 
 const props = withDefaults(defineProps<{
   friend: VRChat.LimitedUserFriend;
-}>(), {});
+  selected?: boolean;
+  settingsVersion?: number;
+}>(), {
+  selected: false,
+  settingsVersion: 0,
+});
 
 const emit = defineEmits<{
-  (e: 'open-settings', friend: VRChat.LimitedUserFriend): void;
+  (e: 'card-click', payload: { friend: VRChat.LimitedUserFriend; event: MouseEvent }): void;
   (e: 'hover', payload: HoverPayload): void;
 }>();
 
@@ -97,8 +102,8 @@ const emitHover = (active: boolean) => {
   emit('hover', {id: props.friend.id, rgb: rgb.value, active});
 };
 
-const openSettings = () => {
-  emit('open-settings', props.friend);
+const handleClick = (event: MouseEvent) => {
+  emit('card-click', {friend: props.friend, event});
 };
 
 const handleMouseEnter = () => {
@@ -118,6 +123,13 @@ watch(
     },
 );
 
+watch(
+  () => props.settingsVersion,
+  () => {
+    void refreshNotificationStatus();
+  },
+);
+
 watch(rgb, () => {
   if (isHovered.value) {
     emitHover(true);
@@ -131,16 +143,23 @@ onMounted(() => {
 
 <template>
   <article
-      class="bg-vrc-background-secondary border-3 border-vrc-background-secondary cursor-pointer duration-150 flex flex-col friend-card group overflow-hidden rounded-2xl select-none transition-colors"
+      class="bg-vrc-background-secondary border-3 border-vrc-background-secondary cursor-pointer duration-150 flex flex-col friend-card friend-card-selectable group overflow-hidden rounded-2xl select-none transition-colors"
+      :data-friend-id="props.friend.id"
+      :class="props.selected ? 'ring-2 ring-vrc-highlight/70 shadow-[0_0_16px_rgba(106,227,249,0.35)]' : ''"
       :style="cardStyle"
-      @click="openSettings"
+      @click="handleClick"
       @mouseenter="handleMouseEnter"
       @mouseleave="handleMouseLeave"
   >
+    <div
+        v-if="props.selected"
+        class="absolute bg-vrc-highlight/45 inset-0 pointer-events-none z-10"
+    ></div>
     <img
         alt=""
         class="aspect-video duration-200 ease-out object-cover rounded-t-xl transition-transform group-hover:scale-105"
         loading="lazy"
+        draggable="false"
         :src="avatarUrl"
         :class="isOffline ? 'opacity-70' : ''"
     />

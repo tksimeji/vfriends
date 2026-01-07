@@ -77,7 +77,3 @@ const handlePlayNotificationSound = () => {
     </VrcButton>
   </div>
 </template>
-
-<style scoped>
-
-</style>

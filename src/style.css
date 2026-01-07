@@ -57,6 +57,13 @@
   will-change: transform;
 }
 
+.selecto-selection {
+  background: color-mix(in srgb, var(--color-vrc-highlight) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-vrc-highlight) 70%, transparent);
+  pointer-events: none;
+  z-index: 45;
+}
+
 [data-tauri-frame-tb] {
   height: 100%;
   display: flex;

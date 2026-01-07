@@ -17,6 +17,7 @@
     "@tauri-apps/plugin-opener": "^2",
     "lucide-vue-next": "^0.562.0",
     "node-vibrant": "^4.0.3",
+    "selecto": "^1.26.3",
     "tailwindcss": "^4.1.18",
     "vue": "^3.5.13",
     "vue-final-modal": "^4.5.5",

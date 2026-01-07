@@ -11,6 +11,7 @@ const friendEventUnlisten = ref<UnlistenFn | null>(null);
 const isListening = ref(false);
 let pendingSnapshot: VRChat.LimitedUserFriend[] | null = null;
 let refreshFrame: number | null = null;
+let isRefreshSuspended = false;
 
 const mergeFriends = (
   current: VRChat.LimitedUserFriend[],
@@ -49,6 +50,10 @@ const applyFriendsSnapshot = (friends: VRChat.LimitedUserFriend[]) => {
 };
 
 const scheduleSnapshot = (friends: VRChat.LimitedUserFriend[]) => {
+  if (isRefreshSuspended) {
+    pendingSnapshot = friends;
+    return;
+  }
   pendingSnapshot = friends;
   if (refreshFrame !== null) return;
   if (typeof window === 'undefined' || !window.requestAnimationFrame) {
@@ -79,6 +84,7 @@ const startAutoRefresh = () => {
 
 const stopAutoRefresh = () => {
   isListening.value = false;
+  isRefreshSuspended = false;
   if (refreshFrame !== null && typeof window !== 'undefined') {
     window.cancelAnimationFrame(refreshFrame);
     refreshFrame = null;
@@ -97,4 +103,11 @@ export const useFriends = () => ({
   refresh,
   startAutoRefresh,
   stopAutoRefresh,
+  setRefreshSuspended: (value: boolean) => {
+    isRefreshSuspended = value;
+    if (!isRefreshSuspended && pendingSnapshot) {
+      applyFriendsSnapshot(pendingSnapshot);
+      pendingSnapshot = null;
+    }
+  },
 });

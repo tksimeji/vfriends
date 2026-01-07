@@ -94,6 +94,12 @@ const ja = {
       openProfile: 'VRChatプロフィールを開く',
       openInstance: 'インスタンスを開く',
     },
+    bulkToast: {
+      selectionCount: '{count}人選択中',
+      enabled: '{count}人の通知を有効にしました。',
+      disabled: '{count}人の通知を無効にしました。',
+      undo: '取り消す',
+    },
   },
   settings: {
     noSettings: 'ここに表示できる設定がありません。',

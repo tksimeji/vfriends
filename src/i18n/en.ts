@@ -99,6 +99,12 @@ const en = {
       openProfile: 'Open VRChat profile',
       openInstance: 'Open instance in VRChat',
     },
+    bulkToast: {
+      selectionCount: '{count} selected',
+      enabled: 'Notifications enabled for {count} friends.',
+      disabled: 'Notifications disabled for {count} friends.',
+      undo: 'Undo',
+    },
   },
   settings: {
     noSettings: 'No config available.',
