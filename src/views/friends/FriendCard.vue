@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<{
 }>(), {});
 
 const emit = defineEmits<{
-  (e: 'open-settings'): void;
+  (e: 'open-settings', friend: VRChat.LimitedUserFriend): void;
   (e: 'hover', payload: HoverPayload): void;
 }>();
 
@@ -98,7 +98,7 @@ const emitHover = (active: boolean) => {
 };
 
 const openSettings = () => {
-  emit('open-settings');
+  emit('open-settings', props.friend);
 };
 
 const handleMouseEnter = () => {

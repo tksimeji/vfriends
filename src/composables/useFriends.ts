@@ -1,52 +1,16 @@
+import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {computed, ref} from 'vue';
 import {t} from '../i18n';
 import {fetchFriends} from '../invokes.ts';
 import {VRChat} from '../vrchat.ts';
-import {isOffline} from './useFriendStatus';
-
-const AUTO_REFRESH_MS = 30000;
 
 const entries = ref<VRChat.LimitedUserFriend[]>([]);
 const isLoading = ref(false);
 const errorMessage = ref('');
-const refreshTimer = ref<number | null>(null);
-
-const STATUS_PRIORITY: Record<VRChat.UserStatus, number> = {
-  'join me': 0,
-  'active': 1,
-  'ask me': 2,
-  'busy': 3,
-  'offline': 4,
-};
-
-const HIDDEN_LOCATIONS = new Set(['offline', 'private', 'traveling', 'web']);
-
-const hasKnownLocation = (friend: VRChat.LimitedUserFriend) => {
-  const location = friend.location?.toLowerCase();
-  return Boolean(location && !HIDDEN_LOCATIONS.has(location));
-};
-
-const compareFriends = (
-  first: VRChat.LimitedUserFriend,
-  second: VRChat.LimitedUserFriend,
-) => {
-  const rankA = isOffline(first)
-    ? Number.POSITIVE_INFINITY
-    : STATUS_PRIORITY[first.status] ?? Number.POSITIVE_INFINITY;
-  const rankB = isOffline(second)
-    ? Number.POSITIVE_INFINITY
-    : STATUS_PRIORITY[second.status] ?? Number.POSITIVE_INFINITY;
-  if (rankA !== rankB) return rankA - rankB;
-  const locationA = hasKnownLocation(first);
-  const locationB = hasKnownLocation(second);
-  if (locationA !== locationB) return locationA ? -1 : 1;
-  return first.displayName
-    .toLowerCase()
-    .localeCompare(second.displayName.toLowerCase());
-};
-
-const sortFriends = (friends: VRChat.LimitedUserFriend[]) =>
-  [...friends].sort(compareFriends);
+const friendEventUnlisten = ref<UnlistenFn | null>(null);
+const isListening = ref(false);
+let pendingSnapshot: VRChat.LimitedUserFriend[] | null = null;
+let refreshFrame: number | null = null;
 
 const mergeFriends = (
   current: VRChat.LimitedUserFriend[],
@@ -61,8 +25,8 @@ const mergeFriends = (
   });
 };
 
-const sortedItems = computed(() => sortFriends(entries.value));
-const hasFriends = computed(() => sortedItems.value.length > 0);
+const friends = computed(() => entries.value);
+const hasFriends = computed(() => entries.value.length > 0);
 
 const refresh = async () => {
   if (isLoading.value) return;
@@ -80,23 +44,55 @@ const refresh = async () => {
   }
 };
 
-const startAutoRefresh = (intervalMs = AUTO_REFRESH_MS) => {
-  if (refreshTimer.value !== null) return;
-  refreshTimer.value = window.setInterval(() => {
-    void refresh();
-  }, intervalMs);
+const applyFriendsSnapshot = (friends: VRChat.LimitedUserFriend[]) => {
+  entries.value = mergeFriends(entries.value, friends);
+};
+
+const scheduleSnapshot = (friends: VRChat.LimitedUserFriend[]) => {
+  pendingSnapshot = friends;
+  if (refreshFrame !== null) return;
+  if (typeof window === 'undefined' || !window.requestAnimationFrame) {
+    applyFriendsSnapshot(friends);
+    pendingSnapshot = null;
+    return;
+  }
+  refreshFrame = window.requestAnimationFrame(() => {
+    if (pendingSnapshot) applyFriendsSnapshot(pendingSnapshot);
+    pendingSnapshot = null;
+    refreshFrame = null;
+  });
+};
+
+const startAutoRefresh = () => {
+  if (isListening.value) return;
+  isListening.value = true;
+  void listen<VRChat.LimitedUserFriend[]>('vrc:friends-refresh', (event) => {
+    scheduleSnapshot(event.payload);
+  }).then((unlisten) => {
+    if (!isListening.value) {
+      unlisten();
+      return;
+    }
+    friendEventUnlisten.value = unlisten;
+  });
 };
 
 const stopAutoRefresh = () => {
-  if (refreshTimer.value === null) return;
-  window.clearInterval(refreshTimer.value);
-  refreshTimer.value = null;
+  isListening.value = false;
+  if (refreshFrame !== null && typeof window !== 'undefined') {
+    window.cancelAnimationFrame(refreshFrame);
+    refreshFrame = null;
+  }
+  pendingSnapshot = null;
+  if (friendEventUnlisten.value === null) return;
+  friendEventUnlisten.value();
+  friendEventUnlisten.value = null;
 };
 
 export const useFriends = () => ({
   isLoading,
   errorMessage,
-  sortedItems,
+  friends,
   hasFriends,
   refresh,
   startAutoRefresh,

@@ -18,35 +18,17 @@ const emit = defineEmits<{
 }>();
 
 const isOpen = ref(false);
-const settingsTarget = ref<'global' | string>('global');
+const selectedId = ref<'global' | string>('global');
+const selectedFriend = ref<VRChat.LimitedUserFriend | null>(null);
 const scrollTargetId = ref<string | null>(null);
 const isPanelAnimating = ref(false);
 const panelScrollRef = ref<HTMLElement | null>(null);
 const sidebarRef = ref<{ focusSearch: () => void } | null>(null);
-
-const activeFriendId = computed(() =>
-    settingsTarget.value === 'global' ? null : settingsTarget.value,
-);
-const activeFriend = computed(() =>
-    activeFriendId.value
-        ? props.friends.find((friend) => friend.id === activeFriendId.value) ?? null
-        : null,
-);
-const isGlobalView = computed(() => settingsTarget.value === 'global');
-const panelKey = computed(() => isGlobalView.value ? 'global' : activeFriendId.value ?? 'global');
+const activeFriend = computed(() => selectedFriend.value);
+const isGlobalView = computed(() => selectedId.value === 'global');
+const panelKey = computed(() => (isGlobalView.value ? 'global' : selectedId.value));
 const panelScrollClass = computed(() => isPanelAnimating.value ? 'h-full overflow-hidden' : 'h-full overflow-y-auto');
 const {t} = useI18n();
-
-watch(
-    () => props.friends,
-    (friends) => {
-      if (settingsTarget.value === 'global') return;
-      const exists = friends.some((friend) => friend.id === settingsTarget.value);
-      if (!exists) {
-        settingsTarget.value = 'global';
-      }
-    },
-);
 
 watch(
     () => panelKey.value,
@@ -56,32 +38,35 @@ watch(
     },
 );
 
-const selectGlobalSettings = () => {
-  settingsTarget.value = 'global';
-};
-
-const selectFriendSettings = (friendId: string) => {
-  settingsTarget.value = friendId;
-};
-
 const clearScrollTarget = () => {
   scrollTargetId.value = null;
 };
 
 const openGlobal = () => {
-  settingsTarget.value = 'global';
+  selectedId.value = 'global';
+  selectedFriend.value = null;
   scrollTargetId.value = null;
   isOpen.value = true;
 };
 
-const openFriend = (friendId: string) => {
-  settingsTarget.value = friendId;
-  scrollTargetId.value = friendId;
+const openFriend = (friend: VRChat.LimitedUserFriend) => {
+  selectedId.value = friend.id;
+  selectedFriend.value = friend;
+  scrollTargetId.value = friend.id;
   isOpen.value = true;
 };
 
 const close = () => {
   isOpen.value = false;
+};
+
+const handleSidebarSelect = (payload: {
+  id: string;
+  friend: VRChat.LimitedUserFriend | null;
+}) => {
+  clearScrollTarget();
+  selectedId.value = payload.id;
+  selectedFriend.value = payload.friend;
 };
 
 watch(isOpen, (next, prev) => {
@@ -132,12 +117,9 @@ const handlePanelAfterLeave = () => {
       <SettingsSidebar
           ref="sidebarRef"
           :friends="props.friends"
-          :selected-id="settingsTarget"
+          :selected-id="selectedId"
           :scroll-target-id="scrollTargetId"
-          @select="(id) => {
-          clearScrollTarget();
-          id === 'global' ? selectGlobalSettings() : selectFriendSettings(id);
-        }"
+          @select="handleSidebarSelect"
           @scrolled="clearScrollTarget"
       />
       <section class="flex-1 min-h-0 overflow-hidden">

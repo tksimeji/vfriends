@@ -1,10 +1,11 @@
 use crate::notifier::notify_friend_online;
-use crate::vrchat_utils::AppResult;
+use crate::vrchat_utils::{self, AppResult};
+use crate::websocket::refresh_friends::emit_refresh_friends;
 use crate::websocket::types::{FriendOnlineEvent, WebsocketMessage};
 use futures_util::StreamExt;
 use log::{error, info, warn};
 use reqwest::Url;
-use tauri::AppHandle;
+use tauri::{AppHandle};
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::http::HeaderValue;
 use tokio_tungstenite::tungstenite::Message;
@@ -18,19 +19,26 @@ pub async fn listen(app: &AppHandle, auth_token: &str, user_agent: &str) -> AppR
             None => return,
         };
 
-        // friend-online
+        // Send online toast notification
         if message.is_friend_online_message() {
-            let event = match message.content_as::<FriendOnlineEvent>() {
-                Some(event) => event,
-                None => return,
-            };
+            if let Some(event) = message.content_as::<FriendOnlineEvent>() {
+                let app = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(err) = notify_friend_online(&app, event).await {
+                        error!("Failed to notify friend online: {}", err);
+                    }
+                });
+            }
+        }
+
+        // Prompts the front end to update friends view
+        if message.is_friend_message() {
             let app = app.clone();
             tauri::async_runtime::spawn(async move {
-                if let Err(err) = notify_friend_online(&app, event).await {
-                    error!("Failed to notify friend online: {}", err);
+                if let Err(err) = emit_refresh_friends(&app).await {
+                    error!("Failed to refresh friends: {}", err);
                 }
             });
-            return;
         }
     })
     .await

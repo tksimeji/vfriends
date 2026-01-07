@@ -10,7 +10,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'open-settings', friendId: string): void;
+  (e: 'open-settings', friend: VRChat.LimitedUserFriend): void;
   (e: 'hover-color', rgb: [number, number, number] | null): void;
 }>();
 
@@ -18,8 +18,8 @@ const friendsRef = computed(() => props.friends);
 const {gridRows, gridStyle, minRowHeight, gridContainerRef} = useFriendGrid(friendsRef);
 const hoveredId = ref<string | null>(null);
 
-const openSettingsForFriend = (friendId: string) => {
-  emit('open-settings', friendId);
+const openSettingsForFriend = (friend: VRChat.LimitedUserFriend) => {
+  emit('open-settings', friend);
 };
 
 const handleHover = (payload: {
@@ -57,7 +57,7 @@ const handleHover = (payload: {
                 v-for="entry in item.items"
                 :key="entry.id"
                 :friend="entry"
-                @open-settings="openSettingsForFriend(entry.id)"
+                @open-settings="openSettingsForFriend"
                 @hover="handleHover"
             />
           </div>

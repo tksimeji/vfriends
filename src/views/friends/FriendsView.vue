@@ -3,12 +3,14 @@ import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
 import {useAuthSession} from '../../composables/useAuthSession';
 import {useFriends} from '../../composables/useFriends';
+import {isOffline} from '../../composables/useFriendStatus';
+import type {VRChat} from '../../vrchat.ts';
 import SettingsModal from '../settings/SettingsModal.vue';
 import FriendsList from './FriendsList.vue';
 import type {FriendsStatusMessage} from './types';
 
 const {
-  sortedItems,
+  friends,
   isLoading,
   errorMessage,
   hasFriends,
@@ -28,17 +30,55 @@ const emit = defineEmits<{
   (e: 'logout'): void;
 }>();
 
+const STATUS_PRIORITY: Record<VRChat.UserStatus, number> = {
+  'join me': 0,
+  'active': 1,
+  'ask me': 2,
+  'busy': 3,
+  'offline': 4,
+};
+
+const HIDDEN_LOCATIONS = new Set(['offline', 'private', 'traveling', 'web']);
+
+const hasKnownLocation = (friend: VRChat.LimitedUserFriend) => {
+  const location = friend.location?.toLowerCase();
+  return Boolean(location && !HIDDEN_LOCATIONS.has(location));
+};
+
+const compareFriends = (
+  first: VRChat.LimitedUserFriend,
+  second: VRChat.LimitedUserFriend,
+) => {
+  const rankA = isOffline(first)
+    ? Number.POSITIVE_INFINITY
+    : STATUS_PRIORITY[first.status] ?? Number.POSITIVE_INFINITY;
+  const rankB = isOffline(second)
+    ? Number.POSITIVE_INFINITY
+    : STATUS_PRIORITY[second.status] ?? Number.POSITIVE_INFINITY;
+  if (rankA !== rankB) return rankA - rankB;
+  const locationA = hasKnownLocation(first);
+  const locationB = hasKnownLocation(second);
+  if (locationA !== locationB) return locationA ? -1 : 1;
+  return first.displayName
+    .toLowerCase()
+    .localeCompare(second.displayName.toLowerCase());
+};
+
+const sortedFriends = computed(() =>
+  [...friends.value].sort(compareFriends),
+);
+
 const filteredFriends = computed(() => {
   const query = props.searchQuery.trim().toLowerCase();
-  if (!query) return sortedItems.value;
-  return sortedItems.value.filter((friend) =>
+  if (!query) return sortedFriends.value;
+  return sortedFriends.value.filter((friend) =>
     friend.displayName.toLowerCase().includes(query),
   );
 });
 
 type SettingsModalHandle = {
   openGlobal: () => void;
-  openFriend: (friendId: string) => void;
+  openFriend: (friend: VRChat.LimitedUserFriend) => void;
   close: () => void;
   focusSidebarSearch: () => void;
 };
@@ -107,8 +147,8 @@ const openSettings = () => {
   settingsModalRef.value?.openGlobal();
 };
 
-const openSettingsForFriend = (friendId: string) => {
-  settingsModalRef.value?.openFriend(friendId);
+const openSettingsForFriend = (friend: VRChat.LimitedUserFriend) => {
+  settingsModalRef.value?.openFriend(friend);
 };
 
 const closeSettings = () => {
@@ -131,7 +171,7 @@ defineExpose({
   <div class="flex flex-1 flex-col max-w-6xl min-h-0 mx-auto px-4 pt-4 relative w-full">
     <SettingsModal
         ref="settingsModalRef"
-        :friends="sortedItems"
+        :friends="friends"
         @open="emit('settings-opened')"
         @close="emit('settings-closed')"
         @logout="emit('logout')"

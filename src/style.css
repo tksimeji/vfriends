@@ -52,6 +52,11 @@
   }
 }
 
+.vue-recycle-scroller__item-wrapper {
+  transition: opacity 180ms ease, transform 180ms ease;
+  will-change: transform;
+}
+
 [data-tauri-frame-tb] {
   height: 100%;
   display: flex;

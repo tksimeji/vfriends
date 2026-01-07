@@ -16,7 +16,7 @@ const emit = defineEmits<{
   (e: 'select', friendId: string): void;
 }>();
 
-const {sortedItems} = useFriends();
+const {friends} = useFriends();
 const {t} = useI18n();
 
 const rootRef = ref<HTMLElement | null>(null);
@@ -32,7 +32,7 @@ const normalizedQuery = computed(() => searchQuery.value.toLowerCase());
 const filteredSuggestions = computed(() => {
   const normalized = normalizedQuery.value;
   if (!normalized) return [];
-  return sortedItems.value
+  return friends.value
       .filter((friend) => friend.displayName.toLowerCase().includes(normalized))
       .slice(0, MAX_VISIBLE);
 });

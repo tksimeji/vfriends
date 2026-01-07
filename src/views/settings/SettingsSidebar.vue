@@ -27,7 +27,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'select', id: string): void;
+  (e: 'select', payload: { id: string; friend: VRChat.LimitedUserFriend | null }): void;
   (e: 'scrolled'): void;
 }>();
 
@@ -39,11 +39,23 @@ const scrollerRef = ref<RecycleScrollerHandle | null>(null);
 const isAlive = ref(true);
 const searchQuery = ref('');
 const searchInputRef = ref<VrcInputHandle | null>(null);
+const nameCollator = new Intl.Collator(['ja', 'en'], {
+  numeric: true,
+  sensitivity: 'base',
+});
+
+const sortedFriends = computed(() =>
+  [...props.friends].sort((first, second) =>
+    nameCollator.compare(first.displayName, second.displayName),
+  ),
+);
 
 const filteredFriends = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
-  if (!query) return props.friends;
-  return props.friends.filter((friend) => friend.displayName.toLowerCase().includes(query));
+  if (!query) return sortedFriends.value;
+  return sortedFriends.value.filter((friend) =>
+    friend.displayName.toLowerCase().includes(query),
+  );
 });
 
 const scrollToSelected = async () => {
@@ -67,11 +79,11 @@ const scrollToSelected = async () => {
 };
 
 const selectGlobal = () => {
-  emit('select', 'global');
+  emit('select', {id: 'global', friend: null});
 };
 
-const selectFriend = (friendId: string) => {
-  emit('select', friendId);
+const selectFriend = (friend: VRChat.LimitedUserFriend) => {
+  emit('select', {id: friend.id, friend});
 };
 
 const isFriendEnabled = (friendId: string) =>
@@ -166,7 +178,7 @@ onBeforeUnmount(() => {
               type="button"
               class="bg-linear-to-l flex from-vrc-background/20  gap-2 items-center px-4 py-3 rounded-md rounded-bl-2xl select-none to-vrc-background transition w-[calc(100%-1rem)]"
               :class="selectedId === item.id ? 'outline-2 outline-vrc-highlight to-vrc-highlight/15' : 'outline-vrc-highlight/40 hover:outline-2'"
-              @click="selectFriend(item.id)"
+              @click="selectFriend(item)"
           >
             <VrcAvatar
                 :user="item"
