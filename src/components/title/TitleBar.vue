@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {ref} from 'vue';
 import {useAuthSession} from '../../composables/useAuthSession';
+import type {VRChat} from '../../vrchat.ts';
 import AccountButton from './AccountButton.vue';
 import SearchBox from './SearchBox.vue';
 
@@ -12,7 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:query', value: string): void;
   (e: 'open-settings'): void;
-  (e: 'open-friend-settings', friendId: string): void;
+  (e: 'open-friend-settings', friend: VRChat.LimitedUserFriend): void;
 }>();
 
 const searchBoxRef = ref<{ focus: () => void } | null>(null);
@@ -51,7 +52,7 @@ defineExpose({
           ref="searchBoxRef"
           :model-value="props.query"
           @update:model-value="(value) => emit('update:query', value)"
-          @select="(friendId) => emit('open-friend-settings', friendId)"
+          @select="(friend) => emit('open-friend-settings', friend)"
       />
     </div>
   </div>

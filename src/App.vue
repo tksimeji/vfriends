@@ -7,6 +7,7 @@ import './style.css';
 import {type AuthEvent, useAuthSession} from './composables/useAuthSession';
 import {useDominantColor} from './composables/useDominantColor';
 import {logout, restoreSession} from './invokes';
+import type {VRChat} from './vrchat.ts';
 import LoginWelcomeOverlay from './views/auth/LoginWelcomeOverlay.vue';
 import FriendsView from './views/friends/FriendsView.vue';
 import 'vue-final-modal/style.css';
@@ -14,7 +15,7 @@ import Oobe from './views/oobe/Oobe.vue';
 
 type FriendsViewHandle = {
   openSettings: () => void;
-  openSettingsForFriend: (friendId: string) => void;
+  openSettingsForFriend: (friend: VRChat.LimitedUserFriend) => void;
   closeSettings: () => void;
   focusSettingsSearch: () => void;
 };
@@ -52,8 +53,8 @@ const handleOpenSettings = () => {
   friendsViewRef.value?.openSettings();
 };
 
-const handleOpenFriendSettings = (friendId: string) => {
-  friendsViewRef.value?.openSettingsForFriend(friendId);
+const handleOpenFriendSettings = (friend: VRChat.LimitedUserFriend) => {
+  friendsViewRef.value?.openSettingsForFriend(friend);
 };
 
 const handleHoverColor = (rgb: [number, number, number] | null) => {

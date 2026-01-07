@@ -13,7 +13,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
-  (e: 'select', friendId: string): void;
+  (e: 'select', friend: VRChat.LimitedUserFriend): void;
 }>();
 
 const {friends} = useFriends();
@@ -51,8 +51,8 @@ const handleInput = (event: InputEvent) => {
   emit('update:modelValue', (event.target as HTMLInputElement).value);
 };
 
-const selectSuggestion = (friendId: string) => {
-  emit('select', friendId);
+const selectSuggestion = (friend: VRChat.LimitedUserFriend) => {
+  emit('select', friend);
   clearInput();
 };
 
@@ -70,7 +70,7 @@ const moveActiveSuggestion = (delta: number) => {
 const selectActiveSuggestion = () => {
   const target = filteredSuggestions.value[activeSuggestion.value];
   if (!target) return;
-  selectSuggestion(target.id);
+  selectSuggestion(target);
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -215,7 +215,7 @@ onMounted(() => {
             class="flex gap-2 items-center pl-2 pr-4 py-3 rounded-lg select-none text-left text-sm text-vrc-text w-full hover:bg-vrc-text/20"
             :key="friend.id"
             :class="index === activeSuggestion ? 'bg-vrc-text/15' : ''"
-            @click="selectSuggestion(friend.id)"
+            @click="selectSuggestion(friend)"
             @mouseenter="hoveredSuggestion = index"
             @mouseleave="hoveredSuggestion = -1"
         >
