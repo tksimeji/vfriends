@@ -90,7 +90,7 @@ watch(
                 <MoreHorizontalIcon :size="14"/>
               </div>
             </TransitionGroup>
-            <span class="text-xs text-vrc-text/60">
+            <span class="select-none text-xs text-vrc-text/60">
               {{ selectionLabel }}
             </span>
           </div>

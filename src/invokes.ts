@@ -62,3 +62,8 @@ export const saveNotificationSound = (name: string, bytes: number[]) =>
     name,
     bytes,
   });
+
+export const saveNotificationSoundPath = (path: string) =>
+  invoke<string>('save_notification_sound_path', {
+    path,
+  });

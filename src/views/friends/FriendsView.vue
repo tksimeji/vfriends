@@ -9,6 +9,7 @@ import {isOffline} from '../../composables/useFriendStatus';
 import {setFriendSettings} from '../../invokes';
 import type {VRChat} from '../../vrchat.ts';
 import SettingsModal from '../settings/SettingsModal.vue';
+import FriendsActionToast from './FriendsActionToast.vue';
 import FriendsList from './FriendsList.vue';
 import FriendsSelectionActions from './FriendsSelectionActions.vue';
 import type {FriendsStatusMessage} from './types';
@@ -32,23 +33,28 @@ const STATUS_PRIORITY: Record<VRChat.UserStatus, number> = {
   'busy': 3,
   'offline': 4,
 };
+
 const HIDDEN_LOCATIONS = new Set(['offline', 'private', 'traveling', 'web']);
-const settingsModalRef = ref<SettingsModalHandle | null>(null);
-const friendsListRef = ref<FriendsListHandle | null>(null);
-const viewportRef = ref<HTMLElement | null>(null);
-const settingsVersion = ref(0);
-const actionToast = ref<{ message: string; id: number } | null>(null);
-let actionToastTimer: number | null = null;
-const showList = ref(false);
+
 const props = defineProps<{
   searchQuery: string;
 }>();
+
 const emit = defineEmits<{
   (e: 'settings-opened'): void;
   (e: 'settings-closed'): void;
   (e: 'hover-color', rgb: [number, number, number] | null): void;
   (e: 'logout'): void;
 }>();
+
+const settingsModalRef = ref<SettingsModalHandle | null>(null);
+const friendsListRef = ref<FriendsListHandle | null>(null);
+const viewportRef = ref<HTMLElement | null>(null);
+const settingsVersion = ref(0);
+const actionToast = ref<{ enabled: boolean; count: number; id: number } | null>(null);
+const showList = ref(false);
+const isSettingsOpen = ref(false);
+
 const {
   friends,
   isLoading,
@@ -79,6 +85,7 @@ const {handleViewportPointerDown, isSelecting} = useFriendSelectionDrag({
   viewportRef,
   listRef: friendsListRef,
   showList,
+  isModalOpen: isSettingsOpen,
   getFilteredFriends: () => filteredFriends.value,
   selectedIds,
   selectionAnchorId,
@@ -87,6 +94,7 @@ const {handleViewportPointerDown, isSelecting} = useFriendSelectionDrag({
   selectAll,
   setOnSelectionChange: setOnChange,
 });
+
 const sortedFriends = computed(() =>
   [...friends.value].sort(compareFriends),
 );
@@ -194,6 +202,20 @@ const handleFriendClick = (payload: { friend: VRChat.LimitedUserFriend; event: M
   openSettingsForFriend(friend);
 };
 
+const handleHoverColor = (rgb: [number, number, number] | null) => {
+  emit('hover-color', rgb);
+};
+
+const handleSettingsOpened = () => {
+  isSettingsOpen.value = true;
+  emit('settings-opened');
+};
+
+const handleSettingsClosed = () => {
+  isSettingsOpen.value = false;
+  emit('settings-closed');
+};
+
 const applySelectionNotifications = async (enabled: boolean) => {
   const targetIds = [...selectedIds.value];
   if (targetIds.length === 0) return;
@@ -202,21 +224,11 @@ const applySelectionNotifications = async (enabled: boolean) => {
       targetIds.map((friendId) => setFriendSettings(friendId, {enabled})),
     );
     settingsVersion.value += 1;
-    const messageKey = enabled
-      ? 'friends.bulkToast.enabled'
-      : 'friends.bulkToast.disabled';
     actionToast.value = {
-      message: t(messageKey, {count: targetIds.length}),
+      enabled,
+      count: targetIds.length,
       id: Date.now(),
     };
-    if (actionToastTimer) {
-      window.clearTimeout(actionToastTimer);
-      actionToastTimer = null;
-    }
-    actionToastTimer = window.setTimeout(() => {
-      actionToast.value = null;
-      actionToastTimer = null;
-    }, 2000);
     clearSelection();
   } catch (error) {
     console.error(error);
@@ -232,10 +244,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   stopAutoRefresh();
-  if (actionToastTimer) {
-    window.clearTimeout(actionToastTimer);
-    actionToastTimer = null;
-  }
 });
 
 watch(
@@ -291,8 +299,8 @@ defineExpose({
       <SettingsModal
           ref="settingsModalRef"
           :friends="friends"
-          @open="emit('settings-opened')"
-          @close="emit('settings-closed')"
+          @open="handleSettingsOpened"
+          @close="handleSettingsClosed"
           @logout="emit('logout')"
       />
       <FriendsSelectionActions
@@ -303,14 +311,7 @@ defineExpose({
           @disable="() => applySelectionNotifications(false)"
           @enable="() => applySelectionNotifications(true)"
       />
-      <Transition name="action-toast">
-        <div v-if="actionToast" class="absolute bottom-6 flex inset-x-0 justify-center px-4 z-20">
-          <div
-              class="backdrop-blur-md bg-black/80 border border-white/10 px-4 py-2 rounded-full shadow-[0_12px_30px_rgba(0,0,0,0.4)] text-sm text-vrc-text/80">
-            {{ actionToast.message }}
-          </div>
-        </div>
-      </Transition>
+      <FriendsActionToast :event="actionToast"/>
       <FriendsList
           v-if="showList"
           ref="friendsListRef"
@@ -318,27 +319,11 @@ defineExpose({
           :selected-ids="selectedIds"
           :settings-version="settingsVersion"
           @friend-click="handleFriendClick"
-          @hover-color="(rgb) => emit('hover-color', rgb)"
+          @hover-color="handleHoverColor"
       />
     </div>
   </div>
 </template>
 
 <style scoped>
-.action-toast-enter-active,
-.action-toast-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.action-toast-enter-from,
-.action-toast-leave-to {
-  opacity: 0;
-  transform: translateY(8px) scale(0.98);
-}
-
-.action-toast-enter-to,
-.action-toast-leave-from {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
 </style>

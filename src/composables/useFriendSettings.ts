@@ -5,6 +5,12 @@ import {FriendSettings} from '../types.ts';
 import {resolveSoundPath} from '../utils.ts';
 import {useAppSettings} from './useAppSettings';
 
+const toErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'string') return error;
+  if (error instanceof Error) return error.message || fallback;
+  return fallback;
+};
+
 export const useFriendSettings = (
   {
     friendId,
@@ -19,6 +25,9 @@ export const useFriendSettings = (
   const settings = ref<FriendSettings | null>(null);
   const messageDraft = ref('');
   const soundDraft = ref('');
+  const soundError = ref('');
+  const isSoundSaving = ref(false);
+  let soundErrorTimer: ReturnType<typeof setTimeout> | null = null;
 
   const loadSettings = async () => {
     const map = await fetchFriendSettings();
@@ -80,10 +89,28 @@ export const useFriendSettings = (
     currentLabel(soundOverridden.value),
   );
 
+  const setSoundError = (message: string) => {
+    soundError.value = message;
+    if (soundErrorTimer) clearTimeout(soundErrorTimer);
+    if (!message) return;
+    soundErrorTimer = setTimeout(() => {
+      soundError.value = '';
+    }, 3000);
+  };
+
+  const clearSoundError = () => {
+    setSoundError('');
+  };
+
   const patchSettings = async (patch: Partial<FriendSettings>) => {
-    await setFriendSettings(friendId.value, patch);
-    await loadSettings();
-    onUpdated?.();
+    try {
+      await setFriendSettings(friendId.value, patch);
+      await loadSettings();
+      onUpdated?.();
+    } catch (error) {
+      setSoundError(toErrorMessage(error, t('settings.notifications.errors.soundFailed')));
+      throw error;
+    }
   };
 
   const toggleNotifications = (value: boolean) => {
@@ -103,14 +130,30 @@ export const useFriendSettings = (
     void patchSettings({messageOverride: trimmed});
   };
 
+  const commitPending = () => {
+    const current = settings.value?.messageOverride ?? '';
+    const trimmed = messageDraft.value.trim();
+    if (trimmed === current) return;
+    void patchSettings({messageOverride: trimmed});
+  };
+
   const selectSound = async (file: File | null) => {
-    const path = await resolveSoundPath(file);
-    if (!path) return;
-    soundDraft.value = path;
-    await patchSettings({soundOverride: path});
+    setSoundError('');
+    isSoundSaving.value = true;
+    try {
+      const path = await resolveSoundPath(file);
+      if (!path) return;
+      soundDraft.value = path;
+      await patchSettings({soundOverride: path});
+    } catch (error) {
+      setSoundError(toErrorMessage(error, t('settings.notifications.errors.soundFailed')));
+    } finally {
+      isSoundSaving.value = false;
+    }
   };
 
   const clearSound = () => {
+    setSoundError('');
     soundDraft.value = '';
     void patchSettings({soundOverride: ''});
   };
@@ -119,6 +162,8 @@ export const useFriendSettings = (
     settings,
     messageDraft,
     soundDraft,
+    soundError,
+    isSoundSaving,
     notificationsEnabled,
     customizeEnabled,
     canCustomize,
@@ -126,9 +171,11 @@ export const useFriendSettings = (
     currentSoundLabel,
     handleMessageInput,
     commitMessage,
+    commitPending,
     selectSound,
     clearSound,
     toggleNotifications,
     toggleCustomize,
+    clearSoundError,
   };
 };

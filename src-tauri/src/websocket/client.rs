@@ -1,5 +1,5 @@
 use crate::notifier::notify_friend_online;
-use crate::vrchat_utils::{self, AppResult};
+use crate::vrchat_utils::{AppResult};
 use crate::websocket::refresh_friends::emit_refresh_friends;
 use crate::websocket::types::{FriendOnlineEvent, WebsocketMessage};
 use futures_util::StreamExt;

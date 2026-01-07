@@ -59,7 +59,7 @@ const selectedOption = computed(() => props.options.find((option) => option.valu
 
         <Transition name="vrc-select-options">
           <ListboxOptions
-              class="absolute backdrop-blur-md bg-vrc-background-secondary/30 border border-vrc-highlight/20 left-0 max-h-60 mt-2 overflow-y-auto rounded-md shadow-xl w-full z-50"
+              class="absolute backdrop-blur-md bg-vrc-background-secondary/80 border border-vrc-highlight/20 left-0 max-h-60 mt-2 overflow-y-auto rounded-md shadow-xl w-full z-50"
           >
             <ListboxOption
                 v-for="option in props.options"

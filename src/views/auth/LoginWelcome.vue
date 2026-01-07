@@ -15,8 +15,8 @@ const {currentUser} = useAuthSession();
         :user="currentUser"
         class="ring-4 ring-white/40"
     />
-    <p class="font-semibold mt-6 text-2xl text-white">{{ t('auth.welcomeTitle') }}</p>
-    <p class="text-sm text-white/80">
+    <p class="font-semibold mt-6 select-none text-2xl text-white">{{ t('auth.welcomeTitle') }}</p>
+    <p class="select-none text-sm text-white/80">
       {{ t('auth.welcomeSubtitle', {name: currentUser?.displayName ?? t('auth.vrchatUserFallback')}) }}</p>
   </div>
 </template>

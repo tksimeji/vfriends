@@ -26,6 +26,7 @@ const alt = computed(() => `${props.user.displayName}'s Icon`);
       class="object-cover rounded-full select-none"
       :src="avatarUrl"
       :alt="alt"
+      :draggable="false"
       :style="{height: `${props.size}px`, width: `${props.size}px`}"
   />
 </template>

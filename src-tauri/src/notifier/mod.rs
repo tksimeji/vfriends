@@ -4,7 +4,7 @@ mod friend_online;
 mod windows_os;
 
 use crate::config::AppSettings;
-pub use custom_sounds::{play_custom_sound, store_custom_sound};
+pub use custom_sounds::{play_custom_sound, store_custom_sound, store_custom_sound_from_path, validate_sound_path};
 pub use friend_online::notify_friend_online;
 use std::collections::HashSet;
 use std::path::PathBuf;

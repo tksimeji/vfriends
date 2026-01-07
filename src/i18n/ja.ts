@@ -4,6 +4,7 @@ const ja = {
   },
   filePicker: {
     clear: '削除',
+    audioFiles: 'オーディオファイル',
     noFileSelected: '未設定',
   },
   userStatus: {
@@ -66,6 +67,8 @@ const ja = {
   oobe: {
     thanksTitle: 'ご購入ありがとうございます！',
     thanksDescription: '気に入っていただけたらうれしいです！Big Love❤',
+    discordPrompt: '不具合や機能リクエストがございましたら、お気軽にDiscordにご参加ください！',
+    discordButton: 'Discordに参加',
     actionStart: 'はじめる',
   },
   friends: {
@@ -127,14 +130,23 @@ const ja = {
       messagePlaceholder: '{name} がオンラインになりました',
       soundLabel: '通知音（ファイル選択）',
       testSound: 'テスト再生',
+      savingSound: '通知音を保存しています…',
       defaultMessageTemplate: '{name} がオンラインになりました',
       errors: {
+        soundFailed: '通知音の保存に失敗しました。',
         loadFailed: '通知設定の読み込みに失敗しました。',
         saveFailed: '通知設定の保存に失敗しました。',
       },
     },
     sidebar: {
       appSettings: 'アプリ設定',
+    },
+    about: {
+      title: 'このアプリについて',
+      developerName: 'tksimeji',
+      developerRole: '開発者',
+      thanksMessage: '気に入って使っていただけるとうれしいです！',
+      versionLabel: 'バージョン',
     },
     friend: {
       deliveryTitle: '通知の配信',

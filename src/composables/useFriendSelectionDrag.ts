@@ -15,6 +15,7 @@ type FriendSelectionDragOptions = {
   viewportRef: Ref<HTMLElement | null>;
   listRef: Ref<FriendsListHandle | null>;
   showList: Ref<boolean>;
+  isModalOpen?: Ref<boolean>;
   getFilteredFriends: () => VRChat.LimitedUserFriend[];
   selectedIds: Ref<Set<string>>;
   selectionAnchorId: Ref<string | null>;
@@ -301,6 +302,9 @@ export const useFriendSelectionDrag = (options: FriendSelectionDragOptions) => {
 
   const handleKeydown = (event: KeyboardEvent) => {
     if (isEditableTarget(event.target)) return;
+    if (options.isModalOpen?.value && event.key.toLowerCase() === 'a' && event.ctrlKey) {
+      return;
+    }
     if (event.key === 'Escape') {
       options.clearSelection();
       return;

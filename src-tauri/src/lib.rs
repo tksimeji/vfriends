@@ -35,6 +35,7 @@ pub fn run() {
                 .args([shell::AUTOSTART_ARG])
                 .build(),
         )
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             app.manage(SettingsStore::load(app.handle()));
@@ -55,6 +56,7 @@ pub fn run() {
             commands::set_app_settings,
             commands::preview_notification_sound,
             commands::save_notification_sound,
+            commands::save_notification_sound_path,
             commands::fetch_icon_data_uri,
         ])
         .run(tauri::generate_context!())

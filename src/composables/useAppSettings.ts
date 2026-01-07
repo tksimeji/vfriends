@@ -4,6 +4,12 @@ import {fetchAppSettings, previewNotificationSound, setAppSettings} from '../inv
 import {AppSettings} from '../types.ts';
 import {resolveSoundPath} from '../utils.ts';
 
+const toErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error === 'string') return error;
+  if (error instanceof Error) return error.message || fallback;
+  return fallback;
+};
+
 const createDefaults = (defaultMessage: string): AppSettings => ({
   defaultMessage,
   defaultSound: null,
@@ -17,8 +23,11 @@ const createState = () => {
     createDefaults(t('settings.notifications.defaultMessageTemplate')),
   );
   const errorMessage = ref('');
+  const soundError = ref('');
   const isReady = ref(false);
+  const isSoundSaving = ref(false);
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
+  let soundErrorTimer: ReturnType<typeof setTimeout> | null = null;
 
   const previewText = computed(() =>
     appSettings.value.defaultMessage
@@ -27,6 +36,18 @@ const createState = () => {
       .replace('{displayName}', t('settings.vrchatUserFallback')) ||
     t('settings.notifications.defaultMessageTemplate'),
   );
+
+  const saveNow = async () => {
+    try {
+      await setAppSettings({
+        defaultMessage: appSettings.value.defaultMessage,
+        defaultSound: appSettings.value.defaultSound ?? '',
+      });
+    } catch (error) {
+      console.error(error);
+      errorMessage.value = t('settings.notifications.errors.saveFailed');
+    }
+  };
 
   const refresh = async () => {
     isReady.value = false;
@@ -49,13 +70,7 @@ const createState = () => {
   const queueSave = () => {
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      void setAppSettings({
-        defaultMessage: appSettings.value.defaultMessage,
-        defaultSound: appSettings.value.defaultSound ?? '',
-      }).catch((error) => {
-        console.error(error);
-        errorMessage.value = t('settings.notifications.errors.saveFailed');
-      });
+      void saveNow();
     }, 500);
   };
 
@@ -76,17 +91,36 @@ const createState = () => {
     appSettings.value.defaultSound = value;
   };
 
+  const setSoundError = (message: string) => {
+    soundError.value = message;
+    if (soundErrorTimer) clearTimeout(soundErrorTimer);
+    if (!message) return;
+    soundErrorTimer = setTimeout(() => {
+      soundError.value = '';
+    }, 3000);
+  };
+
+  const clearSoundError = () => {
+    setSoundError('');
+  };
+
   const selectDefaultSound = async (file: File | null) => {
+    setSoundError('');
+    isSoundSaving.value = true;
     try {
       const path = await resolveSoundPath(file);
       if (!path) return;
       appSettings.value.defaultSound = path;
     } catch (error) {
       console.error(error);
+      setSoundError(toErrorMessage(error, t('settings.notifications.errors.soundFailed')));
+    } finally {
+      isSoundSaving.value = false;
     }
   };
 
   const clearDefaultSound = () => {
+    setSoundError('');
     appSettings.value.defaultSound = null;
     queueSave();
   };
@@ -104,16 +138,28 @@ const createState = () => {
     await previewSound(appSettings.value.defaultSound);
   };
 
+  const flushSave = async () => {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    await saveNow();
+  };
+
   return {
     appSettings,
     errorMessage,
+    soundError,
+    isSoundSaving,
     previewText,
+    clearSoundError,
     refresh,
     setDefaultMessage,
     setDefaultSound,
     selectDefaultSound,
     clearDefaultSound,
     previewDefaultSound,
+    flushSave,
   };
 };
 

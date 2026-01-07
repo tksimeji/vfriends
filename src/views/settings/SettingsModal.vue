@@ -24,6 +24,8 @@ const scrollTargetId = ref<string | null>(null);
 const isPanelAnimating = ref(false);
 const panelScrollRef = ref<HTMLElement | null>(null);
 const sidebarRef = ref<{ focusSearch: () => void } | null>(null);
+const appSettingsRef = ref<{ commitPending: () => void } | null>(null);
+const friendSettingsRef = ref<{ commitPending: () => void } | null>(null);
 const activeFriend = computed(() => selectedFriend.value);
 const isGlobalView = computed(() => selectedId.value === 'global');
 const panelKey = computed(() => (isGlobalView.value ? 'global' : selectedId.value));
@@ -74,6 +76,8 @@ watch(isOpen, (next, prev) => {
   if (next) {
     emit('open');
   } else {
+    appSettingsRef.value?.commitPending();
+    friendSettingsRef.value?.commitPending();
     emit('close');
   }
 });
@@ -136,10 +140,12 @@ const handlePanelAfterLeave = () => {
             <div :key="panelKey" class="min-h-full">
               <AppSettingsPage
                   v-if="isGlobalView"
+                  ref="appSettingsRef"
                   @logout="emit('logout')"
               />
               <FriendSettingsPage
                   v-else-if="activeFriend"
+                  ref="friendSettingsRef"
                   :friend="activeFriend"
               />
               <div v-else class="p-5 text-sm text-vrc-text/70">

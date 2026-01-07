@@ -4,6 +4,7 @@ use crate::vrchat_utils::AppResult;
 use crate::{auth, notifier, vrchat_utils};
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use tauri::{AppHandle, Manager, State};
 use vrchatapi::apis::worlds_api;
 use vrchatapi::models;
@@ -78,6 +79,12 @@ pub fn set_friend_settings(
     friend_id: String,
     patch: FriendSettingsPatch,
 ) -> AppResult<()> {
+    if let Some(sound_override) = patch.sound_override.as_ref() {
+        let trimmed = sound_override.trim();
+        if !trimmed.is_empty() {
+            notifier::validate_sound_path(trimmed)?;
+        }
+    }
     state.consume(|settings| {
         let entry = settings
             .friend_settings
@@ -112,6 +119,12 @@ pub fn set_app_settings(
     state: State<'_, SettingsStore>,
     settings: AppSettingsPatch,
 ) -> AppResult<()> {
+    if let Some(default_sound) = settings.default_sound.as_ref() {
+        let trimmed = default_sound.trim();
+        if !trimmed.is_empty() {
+            notifier::validate_sound_path(trimmed)?;
+        }
+    }
     state.consume(|current| {
         if let Some(default_message) = settings.default_message {
             current.default_message = default_message;
@@ -131,9 +144,29 @@ pub async fn preview_notification_sound(app: AppHandle, sound: Option<String>) -
 }
 
 #[tauri::command]
-pub fn save_notification_sound(app: AppHandle, name: String, bytes: Vec<u8>) -> AppResult<String> {
-    let path = notifier::store_custom_sound(&app, &name, &bytes)?;
+pub async fn save_notification_sound(
+    app: AppHandle,
+    name: String,
+    bytes: Vec<u8>,
+) -> AppResult<String> {
+    let handle = app.clone();
+    let path = tauri::async_runtime::spawn_blocking(move || {
+        notifier::store_custom_sound(&handle, &name, &bytes)
+    })
+    .await
+    .map_err(|error| error.to_string())??;
     Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub async fn save_notification_sound_path(app: AppHandle, path: String) -> AppResult<String> {
+    let handle = app.clone();
+    let stored = tauri::async_runtime::spawn_blocking(move || {
+        notifier::store_custom_sound_from_path(&handle, PathBuf::from(path).as_path())
+    })
+    .await
+    .map_err(|error| error.to_string())??;
+    Ok(stored.to_string_lossy().to_string())
 }
 
 #[tauri::command]

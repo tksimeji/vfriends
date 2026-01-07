@@ -5,6 +5,7 @@ const en = {
   },
   filePicker: {
     clear: 'Clear',
+    audioFiles: 'Audio files',
     noFileSelected: 'Not set',
   },
   titleBar: {
@@ -71,6 +72,8 @@ const en = {
   oobe: {
     thanksTitle: 'Thank you for your purchase!',
     thanksDescription: 'I hope you like it! Big Love❤',
+    discordPrompt: 'If you have any issues or feature requests, feel free to join our Discord!',
+    discordButton: 'Join to Discord',
     actionStart: 'Start',
   },
   friends: {
@@ -132,14 +135,23 @@ const en = {
       messagePlaceholder: '{name} is online',
       soundLabel: 'Notification sound (file)',
       testSound: 'Test sound',
+      savingSound: 'Saving notification sound...',
       defaultMessageTemplate: '{name} is online',
       errors: {
+        soundFailed: 'Failed to save notification sound.',
         loadFailed: 'Failed to load notification config.',
         saveFailed: 'Failed to save notification config.',
       },
     },
     sidebar: {
       appSettings: 'App config',
+    },
+    about: {
+      title: 'About this app',
+      developerName: 'tksimeji',
+      developerRole: 'Developer',
+      thanksMessage: 'Thank you for your purchase! Your support means a lot.',
+      versionLabel: 'Version',
     },
     friend: {
       deliveryTitle: 'Notification delivery',

@@ -23,25 +23,33 @@ const friendSource = computed(() => props.friend);
 const {overlayStyle} = useDominantColor(friendSource);
 const {appSettings, refresh: refreshAppSettings} = useAppSettings();
 
-const {
+  const {
   settings,
   messageDraft,
   notificationsEnabled,
   customizeEnabled,
   canCustomize,
   soundDraft,
+  soundError,
+  isSoundSaving,
   handleMessageInput,
   commitMessage,
   selectSound,
   clearSound,
   toggleNotifications,
   toggleCustomize,
+  clearSoundError,
+  commitPending,
 } = useFriendSettings({
   friendId: computed(() => props.friend.id),
 });
 
 onMounted(() => {
   void refreshAppSettings();
+});
+
+defineExpose({
+  commitPending,
 });
 </script>
 
@@ -124,11 +132,16 @@ onMounted(() => {
               accept=".mp3,.wav,.ogg,.flac,.m4a,audio/*"
               :label="t('settings.friend.soundLabel')"
               :value="soundDraft"
-              :disabled="!canCustomize"
+              :error="soundError"
+              :disabled="!canCustomize || isSoundSaving"
               :clearable="true"
               @select="selectSound"
               @clear="clearSound"
+              @clear-error="clearSoundError"
           />
+          <p v-if="isSoundSaving" class="text-vrc-text/70 text-xs">
+            {{ t('settings.notifications.savingSound') }}
+          </p>
         </div>
       </SettingsCard>
     </div>

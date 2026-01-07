@@ -49,20 +49,20 @@ pub async fn notify_friend_online(app: &AppHandle, event: FriendOnlineEvent) -> 
     };
 
     let silent_mode = windows_os::is_silent_mode(&app).unwrap_or(false);
-    let should_play_override_sound = !silent_mode
-        && friend_settings
-            .as_ref()
-            .is_some_and(|s| s.use_override && s.sound_override.is_some());
+    let override_sound = friend_settings
+        .as_ref()
+        .filter(|settings| settings.use_override)
+        .and_then(|settings| settings.sound_override.as_deref());
+    let sound_path = override_sound.or(app_settings.default_sound.as_deref());
+    let should_play_custom_sound = !silent_mode && sound_path.is_some();
 
-    if should_play_override_sound {
-        if let Some(sound_path) = friend_settings
-            .as_ref()
-            .and_then(|s| s.sound_override.as_deref())
-        {
+    if should_play_custom_sound {
+        if let Some(sound_path) = sound_path {
             custom_sounds::play_custom_sound(PathBuf::from(sound_path));
         }
     }
 
-    windows_os::show_notification(app, title, &body, icon_src, should_play_override_sound)
+    let should_silence_toast = silent_mode || should_play_custom_sound;
+    windows_os::show_notification(app, title, &body, icon_src, should_silence_toast)
         .map_err(|err| err.to_string())
 }
