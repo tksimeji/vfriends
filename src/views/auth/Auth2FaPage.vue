@@ -72,7 +72,7 @@ const onCodeInput = (event: Event) => {
       <VrcSelect
           v-if="props.methods.length > 1"
           :disabled="props.isSubmitting"
-          :model-value="selectedMethod"
+          :model-value="selectedMethod ?? props.methods[0]"
           :options="methodOptions"
           @update:model-value="(value) => selectedMethod = value as TwoFactorMethod"
       />
