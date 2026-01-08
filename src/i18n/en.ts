@@ -152,6 +152,9 @@ const en = {
       developerRole: 'Developer',
       thanksMessage: 'Thank you for your purchase! Your support means a lot.',
       versionLabel: 'Version',
+      boothLatest: 'Check the latest version on Booth',
+      shareButton: 'Share on Twitter',
+      shareText: 'Get Windows notifications when friends come online!\n#VRChat #vfriends\n{url}',
     },
     friend: {
       deliveryTitle: 'Notification delivery',

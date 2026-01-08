@@ -104,6 +104,17 @@ pub fn store_custom_sound_from_path(app: &AppHandle, path: &Path) -> Result<Path
     Ok(target)
 }
 
+pub fn sound_duration_ms(path: &Path) -> Result<u64, String> {
+    let file = File::open(path).map_err(|err| err.to_string())?;
+    let reader = BufReader::new(file);
+    let decoder = Decoder::new(reader).map_err(|_| String::from("Unsupported audio format."))?;
+    let duration = match decoder.total_duration() {
+        Some(duration) => duration,
+        None => estimate_duration(decoder)?,
+    };
+    Ok(duration.as_millis().max(1) as u64)
+}
+
 pub(crate) fn sound_directory(app: &AppHandle) -> Result<PathBuf, String> {
     let base = app
         .path()
@@ -185,6 +196,22 @@ fn ensure_sound_duration<R: Read + Seek + Send + Sync + 'static>(
         }
     }
     Ok(())
+}
+
+fn estimate_duration<R: Read + Seek + Send + Sync + 'static>(
+    mut decoder: Decoder<R>,
+) -> Result<Duration, String> {
+    let channels = decoder.channels().max(1) as u64;
+    let sample_rate = decoder.sample_rate().max(1) as u64;
+    let mut samples = 0u64;
+    while let Some(_sample) = decoder.next() {
+        samples += 1;
+        if samples >= sample_rate * channels * MAX_SOUND_SECONDS {
+            break;
+        }
+    }
+    let total_seconds = samples as f64 / (sample_rate * channels) as f64;
+    Ok(Duration::from_secs_f64(total_seconds))
 }
 
 fn hash_bytes(bytes: &[u8]) -> String {

@@ -53,7 +53,7 @@ export const setAppSettings = (settings: Partial<AppSettings>) => {
 };
 
 export const previewNotificationSound = (sound: string | null) =>
-  invoke('preview_notification_sound', {
+  invoke<number | null>('preview_notification_sound', {
     sound,
   });
 

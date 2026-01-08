@@ -4,6 +4,7 @@ import {useI18n} from 'vue-i18n';
 import heartUrl from '../../assets/FluentHeartSuit3d.png';
 import tksimejiUrl from '../../assets/tksimeji.png';
 import DiscordJoinButton from '../../components/DiscordJoinButton.vue';
+import ShareOnTwitterButton from '../../components/ShareOnTwitterButton.vue';
 import VrcButton from '../../components/VrcButton.vue';
 import VrcSelect from '../../components/VrcSelect.vue';
 import {type LocaleKey, setLocale} from '../../i18n';
@@ -57,8 +58,9 @@ const handleLanguageChange = (value: string) => {
               {{ t('oobe.discordPrompt') }}
             </p>
           </Transition>
-          <div class="flex justify-center">
+          <div class="flex gap-4 justify-center">
             <DiscordJoinButton/>
+            <ShareOnTwitterButton/>
           </div>
         </div>
         <img

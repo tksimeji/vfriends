@@ -4,23 +4,31 @@ mod friend_online;
 mod windows_os;
 
 use crate::config::AppSettings;
-pub use custom_sounds::{play_custom_sound, store_custom_sound, store_custom_sound_from_path, validate_sound_path};
+pub use custom_sounds::{
+    play_custom_sound,
+    sound_duration_ms,
+    store_custom_sound,
+    store_custom_sound_from_path,
+    validate_sound_path,
+};
 pub use friend_online::notify_friend_online;
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::path::Path;
 use tauri::AppHandle;
 
-pub async fn preview_sound(app: &AppHandle, sound: Option<String>) {
+pub async fn preview_sound(app: &AppHandle, sound: Option<String>) -> Option<u64> {
     let Some(sound_path) = sound else {
         let _ = windows_os::show_notification_sound_preview(app);
-        return;
+        return None;
     };
     let trimmed_path = sound_path.trim();
     if trimmed_path.is_empty() {
-        return;
+        return None;
     }
+    let duration = sound_duration_ms(Path::new(trimmed_path)).ok();
     play_custom_sound(PathBuf::from(trimmed_path));
+    duration
 }
 
 pub fn cleanup_unused_sounds(app: &AppHandle, settings: &AppSettings) {

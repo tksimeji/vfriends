@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {EllipsisIcon, PlayIcon, XIcon} from 'lucide-vue-next';
-import {computed, onMounted} from 'vue';
+import {computed, onMounted, ref} from 'vue';
 import VrcAvatar from '../../components/VrcAvatar.vue';
 import VrcButton from '../../components/VrcButton.vue';
 import {useAppSettings} from '../../composables/useAppSettings';
@@ -15,6 +15,16 @@ const props = defineProps<{
 }>();
 
 const {appSettings, refresh} = useAppSettings();
+const isPreviewing = ref(false);
+let previewTimer: ReturnType<typeof setTimeout> | null = null;
+
+const schedulePreviewReset = (durationMs?: number | null) => {
+  if (previewTimer) clearTimeout(previewTimer);
+  const delay = Math.min(Math.max(durationMs ?? 1500, 500), 15000);
+  previewTimer = setTimeout(() => {
+    isPreviewing.value = false;
+  }, delay);
+};
 onMounted(() => {
   void refresh();
 });
@@ -32,13 +42,17 @@ const message = computed(() => {
   return replacePlaceholder(defaultMessage, props.user.displayName);
 });
 
-const handlePlayNotificationSound = () => {
+const handlePlayNotificationSound = async () => {
+  if (isPreviewing.value) return;
+  isPreviewing.value = true;
   const friendSettings = props.settings;
   if (friendSettings?.useOverride && friendSettings.soundOverride) {
-    previewNotificationSound(friendSettings.soundOverride);
-  } else {
-    previewNotificationSound(appSettings.value.defaultSound ?? null);
+    const duration = await previewNotificationSound(friendSettings.soundOverride);
+    schedulePreviewReset(duration);
+    return;
   }
+  const duration = await previewNotificationSound(appSettings.value.defaultSound ?? null);
+  schedulePreviewReset(duration);
 };
 </script>
 
@@ -71,7 +85,7 @@ const handlePlayNotificationSound = () => {
       </div>
     </div>
 
-    <VrcButton class="absolute bottom-3 right-3" @click="handlePlayNotificationSound">
+    <VrcButton class="absolute bottom-3 right-3" :disabled="isPreviewing" :loading="isPreviewing" @click="handlePlayNotificationSound">
       {{ t('settings.friend.previewSound') }}
       <PlayIcon :size="16"/>
     </VrcButton>

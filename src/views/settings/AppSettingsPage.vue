@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import {getVersion} from '@tauri-apps/api/app';
 import {openUrl} from '@tauri-apps/plugin-opener';
+import {PlayIcon} from 'lucide-vue-next';
 import {computed, onMounted, ref} from 'vue';
 import {useI18n} from 'vue-i18n';
 import DiscordJoinButton from '../../components/DiscordJoinButton.vue';
+import ShareOnTwitterButton from '../../components/ShareOnTwitterButton.vue';
 import VrcAvatar from '../../components/VrcAvatar.vue';
 import VrcButton from '../../components/VrcButton.vue';
 import VrcFilePicker from '../../components/VrcFilePicker.vue';
@@ -28,6 +30,7 @@ const {
   errorMessage,
   soundError,
   isSoundSaving,
+  isPreviewing,
   previewText,
   clearSoundError,
   refresh,
@@ -144,7 +147,10 @@ defineExpose({
           @clear-error="clearSoundError"
       />
       <div class="flex flex-wrap gap-2">
-        <VrcButton size="sm" @click="handlePreviewSound">{{ t('settings.notifications.testSound') }}</VrcButton>
+        <VrcButton size="sm" :disabled="isPreviewing" :loading="isPreviewing" @click="handlePreviewSound">
+          {{ t('settings.notifications.testSound') }}
+          <PlayIcon :size="14"/>
+        </VrcButton>
       </div>
       <div class="flex gap-3 items-center">
         <span v-if="isSoundSaving" class="text-vrc-text/70 text-xs">
@@ -161,9 +167,23 @@ defineExpose({
 
     <SettingsCard :title="t('settings.about.title')">
       <div class="space-y-8">
-        <p class="select-text text-vrc-text text-sm">
+        <div>
+          <p class="select-text text-vrc-text text-sm">
             {{ t('settings.about.versionLabel') }} {{ versionLabel }}
-        </p>
+          </p>
+          <a
+              class="duration-150 flex gap-2 items-center transition-colors underline hover:text-vrc-highlight"
+              @click="() => openUrl('https://tksimeji.booth.pm/items/7844126')"
+          >
+            <img
+                class="select-none size-6"
+                src="../../assets/Booth.png"
+                alt="Booth"
+                :draggable="false"
+            />
+            <span>{{ t('settings.about.boothLatest') }}</span>
+          </a>
+        </div>
 
         <div class="space-y-2">
           <div class="flex gap-3 items-center">
@@ -188,7 +208,7 @@ defineExpose({
           >
             <img
                 class="size-4"
-                src="../../assets/Twitter.png"
+                src="../../assets/TwitterBlue.png"
                 alt="Twitter"
                 :draggable="false"
             />
@@ -212,7 +232,10 @@ defineExpose({
           <p class="text-sm text-vrc-text">
             {{ t('oobe.discordPrompt') }}
           </p>
-          <DiscordJoinButton/>
+          <div class="flex gap-4">
+            <DiscordJoinButton/>
+            <ShareOnTwitterButton/>
+          </div>
         </div>
       </div>
     </SettingsCard>

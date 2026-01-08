@@ -147,6 +147,9 @@ const ja = {
       developerRole: '開発者',
       thanksMessage: '気に入って使っていただけるとうれしいです！',
       versionLabel: 'バージョン',
+      boothLatest: 'Boothで最新バージョンを確認する',
+      shareButton: 'Twitterでシェア',
+      shareText: 'フレンドがオンラインになるとWindowsに通知が届く！\n#VRChat #ぶいふれんず\n{url}',
     },
     friend: {
       deliveryTitle: '通知の配信',

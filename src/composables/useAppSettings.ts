@@ -26,6 +26,8 @@ const createState = () => {
   const soundError = ref('');
   const isReady = ref(false);
   const isSoundSaving = ref(false);
+  const isPreviewing = ref(false);
+  let previewTimer: ReturnType<typeof setTimeout> | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let soundErrorTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -125,12 +127,24 @@ const createState = () => {
     queueSave();
   };
 
+  const schedulePreviewReset = (durationMs?: number | null) => {
+    if (previewTimer) clearTimeout(previewTimer);
+    const delay = Math.min(Math.max(durationMs ?? 1500, 500), 15000);
+    previewTimer = setTimeout(() => {
+      isPreviewing.value = false;
+    }, delay);
+  };
+
   const previewSound = async (value?: string | null) => {
+    if (isPreviewing.value) return;
+    isPreviewing.value = true;
     try {
       const resolved = value?.trim();
-      await previewNotificationSound(resolved ? resolved : null);
+      const duration = await previewNotificationSound(resolved ? resolved : null);
+      schedulePreviewReset(duration);
     } catch (error) {
       console.error(error);
+      isPreviewing.value = false;
     }
   };
 
@@ -151,6 +165,7 @@ const createState = () => {
     errorMessage,
     soundError,
     isSoundSaving,
+    isPreviewing,
     previewText,
     clearSoundError,
     refresh,

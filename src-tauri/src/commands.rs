@@ -138,9 +138,11 @@ pub fn set_app_settings(
 }
 
 #[tauri::command]
-pub async fn preview_notification_sound(app: AppHandle, sound: Option<String>) -> AppResult<()> {
-    notifier::preview_sound(&app, sound).await;
-    Ok(())
+pub async fn preview_notification_sound(
+    app: AppHandle,
+    sound: Option<String>,
+) -> AppResult<Option<u64>> {
+    Ok(notifier::preview_sound(&app, sound).await)
 }
 
 #[tauri::command]
