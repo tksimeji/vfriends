@@ -8,7 +8,6 @@ use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
 
 pub async fn notify_friend_online(app: &AppHandle, event: FriendOnlineEvent) -> AppResult<()> {
-    println!("PLATFORM = {}", event.platform);
     if event.platform == "web" {
         return Ok(());
     }
