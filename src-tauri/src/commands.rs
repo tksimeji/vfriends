@@ -5,10 +5,13 @@ use crate::{auth, notifier, vrchat_utils};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager, State};
+use std::time::Duration;
+use tauri::{AppHandle, Emitter, Manager, State};
 use vrchatapi::apis::worlds_api;
 use vrchatapi::models;
 use vrchatapi::models::{CurrentUser, LimitedUserFriend};
+
+const DEFAULT_PREVIEW_DURATION_MS: u64 = 1_500;
 
 #[tauri::command]
 pub async fn fetch_friends(state: State<'_, AuthState>) -> AppResult<Vec<LimitedUserFriend>> {
@@ -143,7 +146,17 @@ pub async fn preview_notification_sound(
     app: AppHandle,
     sound: Option<String>,
 ) -> AppResult<Option<u64>> {
-    Ok(notifier::preview_sound(&app, sound).await)
+    let duration = notifier::preview_sound(&app, sound).await;
+    schedule_preview_end_event(app.clone(), duration);
+    Ok(duration)
+}
+
+fn schedule_preview_end_event(app: AppHandle, duration: Option<u64>) {
+    let wait_ms = duration.unwrap_or(DEFAULT_PREVIEW_DURATION_MS);
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(Duration::from_millis(wait_ms)).await;
+        let _ = app.emit("vrc:preview-sound-ended", ());
+    });
 }
 
 #[tauri::command]

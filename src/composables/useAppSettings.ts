@@ -137,12 +137,29 @@ const createState = () => {
     queueSave();
   };
 
+  let previewFallbackTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const scheduleFallback = () => {
+    if (previewFallbackTimer) clearTimeout(previewFallbackTimer);
+    previewFallbackTimer = setTimeout(() => {
+      isPreviewing.value = false;
+    }, 15_000);
+  };
+
+  const clearFallback = () => {
+    if (previewFallbackTimer) {
+      clearTimeout(previewFallbackTimer);
+      previewFallbackTimer = null;
+    }
+  };
+
   const previewSound = async (value?: string | null) => {
     if (isPreviewing.value) return;
     isPreviewing.value = true;
     try {
       const resolved = value?.trim();
       await previewNotificationSound(resolved ? resolved : null);
+      scheduleFallback();
     } catch (error) {
       console.error(error);
       isPreviewing.value = false;
@@ -165,6 +182,7 @@ const createState = () => {
     if (previewUnlisten) return;
     previewUnlisten = await listen('vrc:preview-sound-ended', () => {
       isPreviewing.value = false;
+      clearFallback();
     });
   };
 

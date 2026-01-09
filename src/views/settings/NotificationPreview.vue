@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {EllipsisIcon, PlayIcon, XIcon} from 'lucide-vue-next';
-import {computed, onMounted, ref} from 'vue';
+import {computed, onBeforeUnmount, onMounted, ref} from 'vue';
 import VrcAvatar from '../../components/VrcAvatar.vue';
 import VrcButton from '../../components/VrcButton.vue';
 import {useAppSettings} from '../../composables/useAppSettings';
@@ -16,17 +17,41 @@ const props = defineProps<{
 
 const {appSettings, refresh} = useAppSettings();
 const isPreviewing = ref(false);
-let previewTimer: ReturnType<typeof setTimeout> | null = null;
+const previewUnlisten = ref<UnlistenFn | null>(null);
+let previewFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
-const schedulePreviewReset = (durationMs?: number | null) => {
-  if (previewTimer) clearTimeout(previewTimer);
-  const delay = Math.min(Math.max(durationMs ?? 1500, 500), 15000);
-  previewTimer = setTimeout(() => {
+const setupPreviewListener = async () => {
+  if (previewUnlisten.value) return;
+  previewUnlisten.value = await listen('vrc:preview-sound-ended', () => {
     isPreviewing.value = false;
-  }, delay);
+    if (previewFallbackTimer) {
+      clearTimeout(previewFallbackTimer);
+      previewFallbackTimer = null;
+    }
+  });
 };
+
+const scheduleFallback = () => {
+  if (previewFallbackTimer) clearTimeout(previewFallbackTimer);
+  previewFallbackTimer = setTimeout(() => {
+    isPreviewing.value = false;
+  }, 15_000);
+};
+
 onMounted(() => {
   void refresh();
+  void setupPreviewListener();
+});
+
+onBeforeUnmount(() => {
+  if (previewUnlisten.value) {
+    previewUnlisten.value();
+    previewUnlisten.value = null;
+  }
+  if (previewFallbackTimer) {
+    clearTimeout(previewFallbackTimer);
+    previewFallbackTimer = null;
+  }
 });
 
 const replacePlaceholder = (input: string, value: string) =>
@@ -45,14 +70,13 @@ const message = computed(() => {
 const handlePlayNotificationSound = async () => {
   if (isPreviewing.value) return;
   isPreviewing.value = true;
+  scheduleFallback();
   const friendSettings = props.settings;
   if (friendSettings?.useOverride && friendSettings.soundOverride) {
-    const duration = await previewNotificationSound(friendSettings.soundOverride);
-    schedulePreviewReset(duration);
+    await previewNotificationSound(friendSettings.soundOverride);
     return;
   }
-  const duration = await previewNotificationSound(appSettings.value.defaultSound ?? null);
-  schedulePreviewReset(duration);
+  await previewNotificationSound(appSettings.value.defaultSound ?? null);
 };
 </script>
 
