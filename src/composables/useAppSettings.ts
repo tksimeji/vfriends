@@ -1,6 +1,7 @@
 import {computed, ref, watch} from 'vue';
 import {useI18n} from 'vue-i18n';
 import {fetchAppSettings, previewNotificationSound, setAppSettings} from '../invokes';
+import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {AppSettings} from '../types.ts';
 import {resolveSoundPath} from '../utils.ts';
 
@@ -27,7 +28,7 @@ const createState = () => {
   const isReady = ref(false);
   const isSoundSaving = ref(false);
   const isPreviewing = ref(false);
-  let previewTimer: ReturnType<typeof setTimeout> | null = null;
+  let previewUnlisten: UnlistenFn | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let soundErrorTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -39,12 +40,21 @@ const createState = () => {
     t('settings.notifications.defaultMessageTemplate'),
   );
 
+  const applySnapshot = (result?: AppSettings | null) => {
+    appSettings.value = {
+      defaultMessage: result?.defaultMessage ?? t('settings.notifications.defaultMessageTemplate'),
+      defaultSound: result?.defaultSound ?? null,
+      friendSettings: result?.friendSettings ?? {},
+    };
+  };
+
   const saveNow = async () => {
     try {
-      await setAppSettings({
+      const result = await setAppSettings({
         defaultMessage: appSettings.value.defaultMessage,
         defaultSound: appSettings.value.defaultSound ?? '',
       });
+      applySnapshot(result);
     } catch (error) {
       console.error(error);
       errorMessage.value = t('settings.notifications.errors.saveFailed');
@@ -127,21 +137,12 @@ const createState = () => {
     queueSave();
   };
 
-  const schedulePreviewReset = (durationMs?: number | null) => {
-    if (previewTimer) clearTimeout(previewTimer);
-    const delay = Math.min(Math.max(durationMs ?? 1500, 500), 15000);
-    previewTimer = setTimeout(() => {
-      isPreviewing.value = false;
-    }, delay);
-  };
-
   const previewSound = async (value?: string | null) => {
     if (isPreviewing.value) return;
     isPreviewing.value = true;
     try {
       const resolved = value?.trim();
-      const duration = await previewNotificationSound(resolved ? resolved : null);
-      schedulePreviewReset(duration);
+      await previewNotificationSound(resolved ? resolved : null);
     } catch (error) {
       console.error(error);
       isPreviewing.value = false;
@@ -159,6 +160,15 @@ const createState = () => {
     }
     await saveNow();
   };
+
+  const setupPreviewListener = async () => {
+    if (previewUnlisten) return;
+    previewUnlisten = await listen('vrc:preview-sound-ended', () => {
+      isPreviewing.value = false;
+    });
+  };
+
+  void setupPreviewListener();
 
   return {
     appSettings,

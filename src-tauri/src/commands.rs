@@ -118,7 +118,7 @@ pub fn set_app_settings(
     app: AppHandle,
     state: State<'_, SettingsStore>,
     settings: AppSettingsPatch,
-) -> AppResult<()> {
+) -> AppResult<AppSettings> {
     if let Some(default_sound) = settings.default_sound.as_ref() {
         let trimmed = default_sound.trim();
         if !trimmed.is_empty() {
@@ -133,8 +133,9 @@ pub fn set_app_settings(
             current.default_sound = normalize_optional(default_sound);
         }
     });
-    notifier::cleanup_unused_sounds(&app, &state.snapshot());
-    Ok(())
+    let snapshot = state.snapshot();
+    notifier::cleanup_unused_sounds(&app, &snapshot);
+    Ok(snapshot)
 }
 
 #[tauri::command]

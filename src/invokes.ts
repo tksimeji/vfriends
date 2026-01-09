@@ -47,7 +47,7 @@ export const setAppSettings = (settings: Partial<AppSettings>) => {
   if ('defaultSound' in settings) {
     payload.defaultSound = settings.defaultSound;
   }
-  return invoke('set_app_settings', {
+  return invoke<AppSettings>('set_app_settings', {
     settings: payload,
   });
 };
